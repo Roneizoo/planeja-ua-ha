@@ -834,32 +834,455 @@ function todayISO(){return new Date().toISOString().slice(0,10);}
 function makeId(prefix){return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
 var state={
-  fazendaNome:'',
-  uaKg:450,
-  dataEstudo:todayISO(),
-  gmdAjuste:GMD_BASE.slice(),
-  gmdPercent:new Array(12).fill(0),
-  gmdStepPercent:5,
-  capMin:1.2,
-  capMax:2.5,
-  capBase:capacidadeCurveFromMinMax(1.2,2.5),
-  capAjustado:capacidadeCurveFromMinMax(1.2,2.5),
-  capPercent:new Array(12).fill(0),
-  lotes:[],
-  piquetes:[],
-  planos:[],
-  recorridas:[],
-  controlPasto:null,
-  currentPage:'inicio',
-  selectedLoteId:null,
-  testGroup:[],
-  testCab:null,
-  testPeso:null,
-  homeQuarter:false,
-  loteSortKey:null,
-  loteSortDir:1,
-  rascunhoPlanos:null,
-  editingPlanId:null
+  "fazendaNome": "Fazenda Primavera",
+  "uaKg": 450,
+  "dataEstudo": "2026-09-13",
+  "gmdAjuste": [
+    0.75,
+    0.7,
+    0.6,
+    0.5,
+    0.4,
+    0.25,
+    0.25,
+    0.2,
+    0.35,
+    0.55,
+    0.64,
+    0.85
+  ],
+  "gmdPercent": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "gmdStepPercent": 5,
+  "capMin": 1.3891500000000003,
+  "capMax": 2.1434375,
+  "capBase": [
+    2.5,
+    2.4129165124598853,
+    2.1750000000000003,
+    1.85,
+    1.5250000000000004,
+    1.287083487540115,
+    1.2000000000000002,
+    1.287083487540115,
+    1.525,
+    1.8499999999999999,
+    2.1750000000000003,
+    2.4129165124598853
+  ],
+  "capAjustado": [
+    2.5,
+    2.4129165124598853,
+    2.1750000000000003,
+    1.85,
+    1.5250000000000004,
+    1.287083487540115,
+    1.2000000000000002,
+    1.287083487540115,
+    1.525,
+    1.8499999999999999,
+    2.1750000000000003,
+    2.4129165124598853
+  ],
+  "capPercent": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "lotes": [
+    {
+      "id": "lmtzp7080ezoa",
+      "lote": "Engoda",
+      "anm": 74,
+      "pv": 320,
+      "categoria": "Fêmea",
+      "piqueteAtual": "",
+      "ativo": true
+    },
+    {
+      "id": "lmtzp98cwvnej",
+      "lote": "Recria 01",
+      "anm": 200,
+      "pv": 240,
+      "categoria": "Fêmea",
+      "piqueteAtual": "",
+      "ativo": true
+    },
+    {
+      "id": "lmtzpo6nqlacl",
+      "lote": "Recria 02",
+      "anm": 201,
+      "pv": 225,
+      "categoria": "Fêmea",
+      "piqueteAtual": "",
+      "ativo": true
+    },
+    {
+      "id": "lmtzpp3thy8uy",
+      "lote": "Recria 03",
+      "anm": 266,
+      "pv": 195,
+      "categoria": "Fêmea",
+      "piqueteAtual": "",
+      "ativo": true
+    },
+    {
+      "id": "lmtzpsish964x",
+      "lote": "Mamando M",
+      "anm": 1,
+      "pv": 160,
+      "categoria": "Macho",
+      "piqueteAtual": "",
+      "ativo": true
+    },
+    {
+      "id": "lmtzpt218tcj9",
+      "lote": "Mamando F",
+      "anm": 1,
+      "pv": 150,
+      "categoria": "Fêmea",
+      "piqueteAtual": "",
+      "ativo": true
+    }
+  ],
+  "piquetes": [
+    {
+      "id": "pmtzownczx75q",
+      "name": "Saída",
+      "area": null,
+      "uaHaAlvo": 0,
+      "saida": true
+    },
+    {
+      "id": "pmtzp0p6okhd9",
+      "name": "Piquete 01",
+      "area": 25,
+      "uaHaAlvo": 1.2,
+      "saida": false
+    },
+    {
+      "id": "pmtzp16ye3b7u",
+      "name": "Piquete 02",
+      "area": 34,
+      "uaHaAlvo": 1.2,
+      "saida": false
+    },
+    {
+      "id": "pmtzp1oq3v75x",
+      "name": "Piquete 03",
+      "area": 44.9,
+      "uaHaAlvo": 1.2,
+      "saida": false
+    },
+    {
+      "id": "pmtzp27bgtp1g",
+      "name": "Piquete 04",
+      "area": 65,
+      "uaHaAlvo": 1.2,
+      "saida": false
+    },
+    {
+      "id": "pmtzp2olm718j",
+      "name": "Piquete 05",
+      "area": 35,
+      "uaHaAlvo": 1.2,
+      "saida": false
+    },
+    {
+      "id": "pmtzp3cogqjjt",
+      "name": "Piquete 06",
+      "area": 68.7,
+      "uaHaAlvo": 1.2,
+      "saida": false
+    }
+  ],
+  "planos": [
+    {
+      "id": "plmtzpxrn2yipp",
+      "loteId": "lmtzp7080ezoa",
+      "loteName": "Engoda",
+      "piqueteAnterior": "",
+      "cab": 74,
+      "peso": 320,
+      "piquetes": [
+        {
+          "id": "pmtzp16ye3b7u",
+          "name": "Piquete 02",
+          "area": 34,
+          "capSnapshot": 40.8,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13",
+      "grupoLotesId": "gl_mtzq34aa",
+      "grupoLotesNome": "Engorda com Cria"
+    },
+    {
+      "id": "plmtzpz23uh3ae",
+      "loteId": "lmtzp98cwvnej",
+      "loteName": "Recria 01",
+      "piqueteAnterior": "",
+      "cab": 200,
+      "peso": 240,
+      "piquetes": [
+        {
+          "id": "pmtzp3cogqjjt",
+          "name": "Piquete 06",
+          "area": 68.7,
+          "capSnapshot": 82.44,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13"
+    },
+    {
+      "id": "plmtzq0gasyvre",
+      "loteId": "lmtzpo6nqlacl",
+      "loteName": "Recria 02",
+      "piqueteAnterior": "",
+      "cab": 201,
+      "peso": 225,
+      "piquetes": [
+        {
+          "id": "pmtzp2olm718j",
+          "name": "Piquete 05",
+          "area": 35,
+          "capSnapshot": 42,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13"
+    },
+    {
+      "id": "plmtzq1596f3hv",
+      "loteId": "lmtzpp3thy8uy",
+      "loteName": "Recria 03",
+      "piqueteAnterior": "",
+      "cab": 266,
+      "peso": 195,
+      "piquetes": [
+        {
+          "id": "pmtzp27bgtp1g",
+          "name": "Piquete 04",
+          "area": 65,
+          "capSnapshot": 78,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13"
+    },
+    {
+      "id": "plmtzq1j2s6ynm",
+      "loteId": "lmtzpsish964x",
+      "loteName": "Mamando M",
+      "piqueteAnterior": "",
+      "cab": 1,
+      "peso": 160,
+      "piquetes": [
+        {
+          "id": "pmtzp16ye3b7u",
+          "name": "Piquete 02",
+          "area": 34,
+          "capSnapshot": 40.8,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13",
+      "grupoLotesId": "gl_mtzq34aa",
+      "grupoLotesNome": "Engorda com Cria"
+    },
+    {
+      "id": "plmtzq2knwjcsx",
+      "loteId": "lmtzpt218tcj9",
+      "loteName": "Mamando F",
+      "piqueteAnterior": "",
+      "cab": 1,
+      "peso": 150,
+      "piquetes": [
+        {
+          "id": "pmtzp16ye3b7u",
+          "name": "Piquete 02",
+          "area": 34,
+          "capSnapshot": 40.8,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13",
+      "grupoLotesId": "gl_mtzq34aa",
+      "grupoLotesNome": "Engorda com Cria"
+    }
+  ],
+  "recorridas": [],
+  "controlPasto": null,
+  "currentPage": "distribuicao",
+  "selectedLoteId": null,
+  "testGroup": [],
+  "testCab": null,
+  "testPeso": null,
+  "homeQuarter": false,
+  "loteSortKey": null,
+  "loteSortDir": 1,
+  "rascunhoPlanos": [
+    {
+      "id": "plmtzpxrn2yipp",
+      "loteId": "lmtzp7080ezoa",
+      "loteName": "Engoda",
+      "piqueteAnterior": "",
+      "cab": 74,
+      "peso": 320,
+      "piquetes": [
+        {
+          "id": "pmtzp16ye3b7u",
+          "name": "Piquete 02",
+          "area": 34,
+          "capSnapshot": 40.8,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13",
+      "grupoLotesId": "gl_mtzq34aa",
+      "grupoLotesNome": "Engorda com Cria"
+    },
+    {
+      "id": "plmtzpz23uh3ae",
+      "loteId": "lmtzp98cwvnej",
+      "loteName": "Recria 01",
+      "piqueteAnterior": "",
+      "cab": 200,
+      "peso": 240,
+      "piquetes": [
+        {
+          "id": "pmtzp3cogqjjt",
+          "name": "Piquete 06",
+          "area": 68.7,
+          "capSnapshot": 82.44,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13"
+    },
+    {
+      "id": "plmtzq0gasyvre",
+      "loteId": "lmtzpo6nqlacl",
+      "loteName": "Recria 02",
+      "piqueteAnterior": "",
+      "cab": 201,
+      "peso": 225,
+      "piquetes": [
+        {
+          "id": "pmtzp2olm718j",
+          "name": "Piquete 05",
+          "area": 35,
+          "capSnapshot": 42,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13"
+    },
+    {
+      "id": "plmtzq1596f3hv",
+      "loteId": "lmtzpp3thy8uy",
+      "loteName": "Recria 03",
+      "piqueteAnterior": "",
+      "cab": 266,
+      "peso": 195,
+      "piquetes": [
+        {
+          "id": "pmtzp27bgtp1g",
+          "name": "Piquete 04",
+          "area": 65,
+          "capSnapshot": 78,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13"
+    },
+    {
+      "id": "plmtzq1j2s6ynm",
+      "loteId": "lmtzpsish964x",
+      "loteName": "Mamando M",
+      "piqueteAnterior": "",
+      "cab": 1,
+      "peso": 160,
+      "piquetes": [
+        {
+          "id": "pmtzp16ye3b7u",
+          "name": "Piquete 02",
+          "area": 34,
+          "capSnapshot": 40.8,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13",
+      "grupoLotesId": "gl_mtzq34aa",
+      "grupoLotesNome": "Engorda com Cria"
+    },
+    {
+      "id": "plmtzq2knwjcsx",
+      "loteId": "lmtzpt218tcj9",
+      "loteName": "Mamando F",
+      "piqueteAnterior": "",
+      "cab": 1,
+      "peso": 150,
+      "piquetes": [
+        {
+          "id": "pmtzp16ye3b7u",
+          "name": "Piquete 02",
+          "area": 34,
+          "capSnapshot": 40.8,
+          "saida": false
+        }
+      ],
+      "dataEstudo": "2026-09-13",
+      "dataConfirmacao": "2026-09-13",
+      "grupoLotesId": "gl_mtzq34aa",
+      "grupoLotesNome": "Engorda com Cria"
+    }
+  ],
+  "editingPlanId": null,
+  "_lastDeletedLote": {
+    "lote": {
+      "id": "lmtzpmjnaa2w3",
+      "lote": "Recria 03",
+      "anm": 241,
+      "pv": 195,
+      "categoria": "Fêmea",
+      "piqueteAtual": ""
+    },
+    "planos": []
+  }
 };
 
 function el(id){return document.getElementById(id);}
