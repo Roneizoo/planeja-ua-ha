@@ -653,14 +653,17 @@ body{min-height:100vh;}
   </div>
 
   <div id="pg-planos" class="pg">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
       <h2 class="serif" style="font-size:16px;margin:0;">Planos confirmados</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
         <button class="btn-gold" id="btnGerarPdf">🐄 Folha do Peão</button>
         <button class="btn-ghost" id="btnGerarPdfEco">▤ Peão Econômica</button>
         <button class="btn-ghost" id="btnRecorridaEco">☑ Recorrida Mensal</button>
+        <button class="btn-ghost" id="btnImportarMovimentacoes" style="border-color:#2b6a8a;color:#2b6a8a;">🔄 Importar Movimentações (App Campo)</button>
+        <input type="file" id="importMovimentacoesFile" accept=".json" style="display:none;">
       </div>
     </div>
+    <div id="movImportMsg" style="font-size:12px;margin-bottom:8px;"></div>
     <div id="planosList" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
 
@@ -2022,6 +2025,50 @@ function trocarPiqueteRotacao(planoId,novoId){
   rot.dataEntradaAtual=todayISO();
   saveState();
   renderPlanos();
+}
+function importarMovimentacoes(evt){
+  var file=evt.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var d=JSON.parse(reader.result);
+      var movs=d.movimentos;
+      if(!Array.isArray(movs))throw new Error('esse arquivo não tem movimentações — exporte "↓ Exportar Tudo" no App Campo.');
+      if(!Array.isArray(state.movimentosAplicados))state.movimentosAplicados=[];
+      var aplicadosSet={};
+      state.movimentosAplicados.forEach(function(id){aplicadosSet[id]=1;});
+      movs=movs.slice().sort(function(a,b){return new Date(a.dataHora)-new Date(b.dataHora);});
+      var aplicados=0,repetidos=0,semCorrespondencia=0;
+      movs.forEach(function(mov){
+        if(aplicadosSet[mov.id]){repetidos++;return;}
+        var pl=state.planos.find(function(p){return p.loteName===mov.loteNome && !planoIsSaida(p);});
+        var novoP=piqueteByName(mov.paraNome);
+        if(!pl||!novoP){semCorrespondencia++;aplicadosSet[mov.id]=1;state.movimentosAplicados.push(mov.id);return;}
+        var jaNoGrupo=pl.piquetes.length>1 && pl.piquetes.some(function(x){return x.id===novoP.id;});
+        if(jaNoGrupo){
+          var rot=garantirRotacao(pl);
+          if(rot && rot.piqueteAtivoId!==novoP.id){
+            rot.historico.push({piqueteId:rot.piqueteAtivoId,dataEntrada:rot.dataEntradaAtual,dataSaida:mov.dataHora.slice(0,10)});
+            rot.piqueteAtivoId=novoP.id;
+            rot.dataEntradaAtual=mov.dataHora.slice(0,10);
+          }
+        }else{
+          pl.piquetes=[{id:novoP.id,name:novoP.name,area:novoP.area,capSnapshot:piqueteCapacidade(novoP),saida:false}];
+          pl.rotacao=null;
+        }
+        aplicadosSet[mov.id]=1;
+        state.movimentosAplicados.push(mov.id);
+        aplicados++;
+      });
+      saveState();
+      el('movImportMsg').innerHTML='<span style="color:#2F6B41;">✓ '+aplicados+' movimentação(ões) aplicada(s)'+(repetidos?', '+repetidos+' já tinham sido aplicadas antes':'')+(semCorrespondencia?', '+semCorrespondencia+' não encontraram lote/piquete correspondente (ignoradas)':'')+'.</span>';
+      renderPlanos();
+    }catch(ex){
+      el('movImportMsg').innerHTML='<span style="color:#A63D2F;">⚠ '+ex.message+'</span>';
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value='';
 }
 function rotacaoHTML(pl){
   var rot=garantirRotacao(pl);
@@ -3408,6 +3455,8 @@ function gerarRecorridaEconomica(){
   el('printSheet').innerHTML=h; setTimeout(function(){window.print();},80);
 }
 el('btnRecorridaEco').addEventListener('click',gerarRecorridaEconomica);
+el('btnImportarMovimentacoes').addEventListener('click',function(){el('importMovimentacoesFile').click();});
+el('importMovimentacoesFile').addEventListener('change',importarMovimentacoes);
 
 el('btnSituacaoExcel').addEventListener('click',function(){
   var d=situacaoData(6);
