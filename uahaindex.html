@@ -1923,6 +1923,66 @@ function renderPlanos(){
   });
   el('planosList').innerHTML=order.map(function(loteId){return loteGroupCardHTML(byLote[loteId]);}).join('');
 }
+function garantirRotacao(pl){
+  if(pl.piquetes.length<=1)return null;
+  if(!pl.rotacao){
+    pl.rotacao={
+      piqueteAtivoId:pl.piquetes[0].id,
+      dataEntradaAtual:pl.dataConfirmacao||todayISO(),
+      diasOcupacaoAlvo:4,
+      diasDescansoAlvo:30,
+      historico:[]
+    };
+  }
+  return pl.rotacao;
+}
+function diasEntreDatas(dataIso){
+  var d1=new Date(dataIso+'T00:00:00'), d2=new Date(todayISO()+'T00:00:00');
+  if(isNaN(d1))return 0;
+  return Math.max(0,Math.round((d2-d1)/86400000));
+}
+function trocarPiqueteRotacao(planoId,novoId){
+  var pl=state.planos.find(function(p){return p.id===planoId;});
+  if(!pl)return;
+  var rot=garantirRotacao(pl);
+  if(!rot||novoId===rot.piqueteAtivoId)return;
+  rot.historico.push({piqueteId:rot.piqueteAtivoId,dataEntrada:rot.dataEntradaAtual,dataSaida:todayISO()});
+  rot.piqueteAtivoId=novoId;
+  rot.dataEntradaAtual=todayISO();
+  saveState();
+  renderPlanos();
+}
+function rotacaoHTML(pl){
+  var rot=garantirRotacao(pl);
+  if(!rot)return '';
+  var diasAtual=diasEntreDatas(rot.dataEntradaAtual);
+  var linhas=pl.piquetes.map(function(p){
+    if(p.id===rot.piqueteAtivoId){
+      var passouAlvo=diasAtual>=rot.diasOcupacaoAlvo;
+      return '<div class="mono" style="font-size:11.5px;padding:3px 0;">🟢 <b>'+p.name+'</b> — ativo há '+diasAtual+' dia(s)'+
+        (passouAlvo?' <span style="color:#A63D2F;font-weight:700;">(passou do alvo de '+rot.diasOcupacaoAlvo+')</span>':' <span style="opacity:.65;">(alvo: '+rot.diasOcupacaoAlvo+' dias)</span>')+
+        '</div>';
+    }
+    var ultimaSaida=null;
+    for(var i=rot.historico.length-1;i>=0;i--){
+      if(rot.historico[i].piqueteId===p.id){ultimaSaida=rot.historico[i].dataSaida;break;}
+    }
+    var diasDescanso=ultimaSaida?diasEntreDatas(ultimaSaida):null;
+    var pronto=diasDescanso!=null&&diasDescanso>=rot.diasDescansoAlvo;
+    var txt=diasDescanso==null?'ainda não foi usado':'descansando há '+diasDescanso+' dia(s)'+(pronto?' — pronto pra voltar':' (alvo: '+rot.diasDescansoAlvo+')');
+    return '<div class="mono" style="font-size:11.5px;padding:3px 0;color:'+(pronto?'#4C7A57;font-weight:700':'#5b5847')+';">⚪ '+p.name+' — '+txt+'</div>';
+  }).join('');
+  var opcoes=pl.piquetes.filter(function(p){return p.id!==rot.piqueteAtivoId;}).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+  return '<div style="background:#F7F3E8;border-radius:8px;padding:8px 10px;margin-top:8px;">'+
+    '<div style="font-size:11px;font-weight:700;margin-bottom:4px;">🔄 Rotação (lotação instantânea)</div>'+
+    linhas+
+    '<div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">'+
+      '<label style="font-size:10.5px;">Ocupação alvo (dias) <input type="number" min="1" value="'+rot.diasOcupacaoAlvo+'" style="width:46px;margin-left:4px;" data-rot-ocup="'+pl.id+'"></label>'+
+      '<label style="font-size:10.5px;">Descanso alvo (dias) <input type="number" min="1" value="'+rot.diasDescansoAlvo+'" style="width:46px;margin-left:4px;" data-rot-descanso="'+pl.id+'"></label>'+
+    '</div>'+
+    (opcoes?'<select data-rot-trocar="'+pl.id+'" style="margin-top:8px;font-size:11.5px;padding:4px;"><option value="">Trocar o gado pra outro piquete do grupo...</option>'+opcoes+'</select>':'')+
+  '</div>';
+}
 function planoStatusInfo(pl){
   var areaTotal=pl.piquetes.reduce(function(s,it){return s+(it.area||0);},0);
   var capTotal=pl.piquetes.reduce(function(s,it){return s+(it.capSnapshot||0);},0);
@@ -1980,7 +2040,7 @@ function planoRodadaHTML(pl){
     (pl.piquetes.length>1 ? '<div class="mono" style="font-size:11.5px;margin-top:4px;font-weight:600;">Área total do grupo: '+fmt(info.areaTotal,2)+' ha</div>' : '')+
     '<div class="mono" style="font-size:12px;margin-top:6px;">'+fmtInt(pl.cab)+' animais de '+fmt(pl.peso,0)+' kg méd → '+fmt(info.uaTotal,1)+' UA total'+(info.uaHa!=null?' · '+fmt(info.uaHa,2)+' UA/ha':'')+'</div>'+
     '<div class="mono" style="font-size:12px;font-weight:600;margin-top:4px;color:'+statusColor+';">'+statusTxt+'</div>'+
-    (pl.piquetes.length>1 ? '<div style="font-size:10.5px;opacity:.6;margin-top:4px;">os dias em cada piquete ficam a seu critério — mais dias no maior, menos no menor</div>' : '')+
+    (pl.piquetes.length>1 ? rotacaoHTML(pl) : '')+
     '<button class="btn-ghost" style="margin-top:8px;font-size:11px;" data-undo-plano="'+pl.id+'">desfazer</button>'+
   '</div>';
 }
@@ -3175,6 +3235,25 @@ el('planosList').addEventListener('click',function(e){
       state.planos=state.planos.filter(function(p){return p.id!==id;});
       saveState(); renderPlanos();
     }
+  }
+});
+el('planosList').addEventListener('change',function(e){
+  var trocarId=e.target.getAttribute('data-rot-trocar');
+  if(trocarId&&e.target.value){
+    trocarPiqueteRotacao(trocarId,e.target.value);
+    return;
+  }
+  var ocupId=e.target.getAttribute('data-rot-ocup');
+  if(ocupId){
+    var pl=state.planos.find(function(p){return p.id===ocupId;});
+    if(pl&&pl.rotacao){pl.rotacao.diasOcupacaoAlvo=Math.max(1,Number(e.target.value)||1);saveState();renderPlanos();}
+    return;
+  }
+  var descansoId=e.target.getAttribute('data-rot-descanso');
+  if(descansoId){
+    var pl2=state.planos.find(function(p){return p.id===descansoId;});
+    if(pl2&&pl2.rotacao){pl2.rotacao.diasDescansoAlvo=Math.max(1,Number(e.target.value)||1);saveState();renderPlanos();}
+    return;
   }
 });
 
