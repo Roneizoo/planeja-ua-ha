@@ -420,7 +420,7 @@ body{min-height:100vh;}
       <button class="btn-ghost" id="btnRenomearFazenda" style="font-size:11px;padding:3px 9px;">✎ renomear</button>
     </h1>
   </div>
-  <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
+  <div id="estanciaActionsHeader" style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
     <div style="display:flex;gap:10px;align-items:center;">
       <label style="font-size:11px;opacity:.75;">Data do estudo<input id="cfgData" type="date" style="width:130px;margin:0 4px;"></label>
       <input type="file" id="importEstanciaFile" accept=".json" style="display:none;">
@@ -439,6 +439,7 @@ body{min-height:100vh;}
     <button class="navbtn" data-pg="planos">✓  Planos confirmados</button>
     <button class="navbtn" data-pg="situacao">●  Situação atual</button>
     <button class="navbtn" data-pg="controlpasto">◉  Control Pasto</button>
+    <button class="navbtn" data-pg="comousar">❓  Como usar</button>
   </div>
 
   <div id="pg-inicio" class="pg">
@@ -777,6 +778,54 @@ body{min-height:100vh;}
           Quando existir um piquete com o mesmo nome cadastrado no Planeja, o UA/ha alvo oficial dele é levado junto. Para os demais, usa-se o alvo padrão informado acima.
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="pg-comousar" class="pg">
+    <div class="paper" style="padding:20px 22px;margin-bottom:16px;">
+      <h2 class="serif" style="font-size:20px;margin:0 0 6px;">Como usar — do planejamento até o celular do peão</h2>
+      <div style="font-size:12.5px;opacity:.7;">Um roteiro simples pra não se perder entre as abas.</div>
+    </div>
+
+    <div class="paper" style="padding:18px 20px;margin-bottom:14px;">
+      <h3 style="margin:0 0 8px;color:#244b35;">1. Exportar e importar a fazenda inteira</h3>
+      <div style="font-size:13px;line-height:1.6;">
+        Os botões <b>"📤 Exportar estância"</b> e <b>"📥 Importar estância"</b> ficam só aqui na <b>Visão geral</b> — eles salvam ou carregam a fazenda inteira (lotes, piquetes, planos, tudo). Não precisa procurar isso em outra aba.
+      </div>
+    </div>
+
+    <div class="paper" style="padding:18px 20px;margin-bottom:14px;">
+      <h3 style="margin:0 0 8px;color:#244b35;">2. Como mandar pro App Campo (Recorrida)</h3>
+      <div style="font-size:13px;line-height:1.6;margin-bottom:10px;">
+        Existem 3 jeitos de gerar o arquivo pro celular do peão, dependendo de onde você está no processo. Use só UM deles, o que combinar com sua situação:
+      </div>
+      <div style="display:grid;gap:10px;">
+        <div style="border-left:4px solid #244b35;padding:8px 12px;background:#F7F3E8;border-radius:6px;">
+          <b>Sua fazenda usa o Control Pasto?</b><br>
+          <span style="font-size:12.5px;">Vá na aba <b>Control Pasto</b> → "Importar Control Pasto" → depois "Exportar para Recorrida".</span>
+        </div>
+        <div style="border-left:4px solid #244b35;padding:8px 12px;background:#F7F3E8;border-radius:6px;">
+          <b>Não usa o Control Pasto, mas já distribuiu os animais?</b><br>
+          <span style="font-size:12.5px;">Vá na aba <b>Situação atual</b> → "Exportar para Recorrida".</span>
+        </div>
+        <div style="border-left:4px solid #244b35;padding:8px 12px;background:#F7F3E8;border-radius:6px;">
+          <b>Não usa o Control Pasto e ainda não distribuiu?</b><br>
+          <span style="font-size:12.5px;">Vá na aba <b>Piquetes</b> → "Importar Recorrida".</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="paper" style="padding:18px 20px;">
+      <h3 style="margin:0 0 8px;color:#244b35;">3. Abrir no celular</h3>
+      <div style="font-size:13px;line-height:1.6;margin-bottom:8px;">
+        O arquivo gerado no passo 2 é importado no App Campo, aqui:
+      </div>
+      <div style="text-align:center;padding:14px;background:#244b35;border-radius:10px;">
+        <a href="https://roneizoo.github.io/controletrato/" target="_blank" style="color:#F7F3E8;font-size:18px;font-weight:900;text-decoration:none;">
+          🌾 roneizoo.github.io/controletrato/
+        </a>
+      </div>
+      <div style="font-size:11.5px;opacity:.65;margin-top:8px;">Funciona sem internet depois de aberto uma vez. Vale salvar esse link na tela inicial do celular.</div>
     </div>
   </div>
 
@@ -1492,6 +1541,9 @@ function showPage(pg){
   document.querySelectorAll('#ybp .pg').forEach(function(d){d.classList.remove('active');});
   el('pg-'+pg).classList.add('active');
   document.querySelectorAll('#ybp .navbtn').forEach(function(b){b.classList.toggle('active',b.dataset.pg===pg);});
+  var mostraAcoes=(pg==='inicio');
+  el('estanciaActionsHeader').style.display=mostraAcoes?'flex':'none';
+  el('estanciaMsg').style.display=mostraAcoes?'block':'none';
   renderAll();
 }
 
