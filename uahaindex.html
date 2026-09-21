@@ -1567,6 +1567,16 @@ function estoqueAtualKg(){
     return s+loteAnmEfetivo(l,saidaMapa)*l.pv;
   },0);
 }
+function estoqueProjetadoKg(diasAFrente){
+  var saidaMapa=cabecasSaidaPorLote();
+  var dataRef=new Date(todayISO()+'T00:00:00');
+  var mi=buildMonthsInfo(dataRef,Math.ceil(diasAFrente/28)+2);
+  return state.lotes.filter(function(l){return l.ativo!==false;}).reduce(function(s,l){
+    var cabEfetivo=loteAnmEfetivo(l,saidaMapa);
+    var pesoProjetado=pesoEmDia(mi,l.pv,0,diasAFrente);
+    return s+cabEfetivo*pesoProjetado;
+  },0);
+}
 function marcarInicioPeriodo(){
   var msg=state.estoqueInicial?
     'Já existe um período iniciado em '+state.estoqueInicial.data+' ('+fmt(state.estoqueInicial.kg,0)+' kg). Marcar um novo início encerra o período atual e zera as entradas registradas. Continuar?':
@@ -1612,6 +1622,10 @@ function renderRelatorio(){
   var areaTotal=state.piquetes.reduce(function(s,p){return s+(p.area||0);},0);
   var producaoPorHa=areaTotal>0?producao/areaTotal:null;
   var dias=Math.max(1,Math.round((new Date(todayISO())-new Date(state.estoqueInicial.data))/86400000));
+  var producaoPorHaAno=producaoPorHa!=null?(producaoPorHa/dias)*365:null;
+
+  var proj30=estoqueProjetadoKg(30),proj90=estoqueProjetadoKg(90);
+  var ganhoProj30=proj30-estoqueAtual,ganhoProj90=proj90-estoqueAtual;
 
   box.innerHTML='<div class="paper" style="padding:18px 20px;">'+
     '<div style="font-size:12px;opacity:.7;margin-bottom:10px;">Período: '+state.estoqueInicial.data+' até hoje ('+dias+' dia(s))</div>'+
@@ -1620,11 +1634,21 @@ function renderRelatorio(){
       '<div class="kpi"><div class="l">Entradas no período</div><div class="v mono">'+fmt(entradasKg,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Saídas no período</div><div class="v mono">'+fmt(saidasKg,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Estoque atual</div><div class="v mono">'+fmt(estoqueAtual,0)+' kg</div></div>'+
-      '<div class="kpi"><div class="l">Produção (kg)</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+fmt(producao,0)+'</div></div>'+
-      '<div class="kpi"><div class="l">Produção por hectare</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+(producaoPorHa!=null?fmt(producaoPorHa,1)+' kg/ha':'—')+'</div></div>'+
+      '<div class="kpi"><div class="l">Produção (kg) em '+dias+' dia(s)</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+fmt(producao,0)+'</div></div>'+
+      '<div class="kpi"><div class="l">Produção por ha/ano (projetada)</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+(producaoPorHaAno!=null?fmt(producaoPorHaAno,0)+' kg/ha/ano':'—')+'</div></div>'+
     '</div>'+
+    '<div style="font-size:11px;opacity:.65;margin-top:8px;">A produção por ha/ano é o ritmo dos últimos '+dias+' dia(s) projetado pra um ano inteiro — quanto mais dias o período tiver, mais confiável esse número fica. Ainda não é um resultado fechado de ano.</div>'+
     (entradas.length?'<div style="margin-top:14px;font-size:12px;"><b>Entradas registradas:</b><ul style="margin:6px 0 0;padding-left:18px;">'+entradas.map(function(e){return '<li>'+e.data+' — '+e.nome+': '+fmtInt(e.cab)+' cab × '+fmt(e.peso,1)+' kg = '+fmt(e.kg,0)+' kg</li>';}).join('')+'</ul></div>':'')+
     (saidas.length?'<div style="margin-top:14px;font-size:12px;"><b>Saídas no período:</b><ul style="margin:6px 0 0;padding-left:18px;">'+saidas.map(function(p){return '<li>'+(p.dataVenda||p.dataConfirmacao)+' — '+p.loteName+': '+fmtInt(p.cab)+' cab × '+fmt(p.peso,1)+' kg = '+fmt(p.cab*p.peso,0)+' kg</li>';}).join('')+'</ul></div>':'')+
+  '</div>'+
+  '<div class="paper" style="padding:18px 20px;margin-top:14px;">'+
+    '<h3 style="margin:0 0 10px;color:#244b35;font-size:14px;">Projeção de peso (pelo GMD cadastrado, se nada mais mudar)</h3>'+
+    '<div class="kpis-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">'+
+      '<div class="kpi"><div class="l">Estoque hoje</div><div class="v mono">'+fmt(estoqueAtual,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Projeção em 30 dias</div><div class="v mono">'+fmt(proj30,0)+' kg <span style="font-size:11px;color:#4C7A57;">(+'+fmt(ganhoProj30,0)+')</span></div></div>'+
+      '<div class="kpi"><div class="l">Projeção em 90 dias</div><div class="v mono">'+fmt(proj90,0)+' kg <span style="font-size:11px;color:#4C7A57;">(+'+fmt(ganhoProj90,0)+')</span></div></div>'+
+    '</div>'+
+    '<div style="font-size:11px;opacity:.65;margin-top:8px;">Considera só o rebanho de hoje ganhando peso pelo GMD da aba Visão Geral — não conta futuras entradas ou saídas que ainda vão acontecer.</div>'+
   '</div>';
   el('relatorioRotacaoBox').innerHTML=renderRotacaoResumo();
 }
@@ -3235,6 +3259,11 @@ el('btnAddLote').addEventListener('click',function(){
   var pv=parseFloat(prompt('Peso médio (kg)?')); if(!pv||pv<=0) return;
   var cat=prompt('Categoria (opcional):')||'—';
   state.lotes.push({id:makeId('l'),lote:lote,anm:anm,pv:pv,categoria:cat,piqueteAtual:''});
+  if(state.estoqueInicial && confirm('Esse lote é gado chegando na fazenda agora (compra, transferência de outra unidade)?\n\nSe sim, registro como entrada no Relatório de produção — assim a conta de produção por hectare fica certa.')){
+    var dataEnt=prompt('Data da entrada (AAAA-MM-DD):',todayISO())||todayISO();
+    if(!Array.isArray(state.entradas))state.entradas=[];
+    state.entradas.push({id:makeId('ent'),data:dataEnt,nome:lote,cab:anm,peso:pv,kg:anm*pv});
+  }
   saveState(); renderLotes();
 });
 el('btnLimparLotes').addEventListener('click',function(){
