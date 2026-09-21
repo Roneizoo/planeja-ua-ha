@@ -439,6 +439,7 @@ body{min-height:100vh;}
     <button class="navbtn" data-pg="planos">✓  Planos confirmados</button>
     <button class="navbtn" data-pg="situacao">●  Situação atual</button>
     <button class="navbtn" data-pg="controlpasto">◉  Control Pasto</button>
+    <button class="navbtn" data-pg="relatorio">📊  Relatório</button>
     <button class="navbtn" data-pg="comousar">❓  Como usar</button>
   </div>
 
@@ -781,6 +782,25 @@ body{min-height:100vh;}
           Quando existir um piquete com o mesmo nome cadastrado no Planeja, o UA/ha alvo oficial dele é levado junto. Para os demais, usa-se o alvo padrão informado acima.
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="pg-relatorio" class="pg">
+    <div class="paper" style="padding:18px 20px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <h2 class="serif" style="font-size:18px;margin:0;">Relatório de produção</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-gold" id="btnMarcarInicioPeriodo">📅 Marcar início do período</button>
+          <button class="btn-ghost" id="btnRegistrarEntrada">+ Registrar entrada de gado</button>
+        </div>
+      </div>
+      <p style="font-size:12.5px;opacity:.75;margin-top:8px;">Acompanha quanto a fazenda produziu (kg de peso vivo) desde o dia em que você marcar o início — comparando o estoque de hoje com o de então, somando saídas (vendas) e descontando entradas (compras) no meio do caminho.</p>
+    </div>
+    <div id="relatorioProducaoBox"></div>
+    <div class="paper" style="padding:18px 20px;margin-top:14px;">
+      <h3 style="margin:0 0 10px;color:#244b35;">Rotação dos piquetões</h3>
+      <p style="font-size:12px;opacity:.7;margin:0 0 10px;">Situação de ocupação/descanso de cada plano com mais de um piquete — a mesma informação da aba Planos confirmados, reunida aqui pra olhar junto com a produção.</p>
+      <div id="relatorioRotacaoBox"></div>
     </div>
   </div>
 
@@ -1541,6 +1561,85 @@ function loteAnmEfetivo(l,saidaMapa){
   var saida=(saidaMapa||cabecasSaidaPorLote())[l.id]||0;
   return Math.max(0,l.anm-saida);
 }
+function estoqueAtualKg(){
+  var saidaMapa=cabecasSaidaPorLote();
+  return state.lotes.filter(function(l){return l.ativo!==false;}).reduce(function(s,l){
+    return s+loteAnmEfetivo(l,saidaMapa)*l.pv;
+  },0);
+}
+function marcarInicioPeriodo(){
+  var msg=state.estoqueInicial?
+    'Já existe um período iniciado em '+state.estoqueInicial.data+' ('+fmt(state.estoqueInicial.kg,0)+' kg). Marcar um novo início encerra o período atual e zera as entradas registradas. Continuar?':
+    'Marcar hoje ('+todayISO()+') como início do período de acompanhamento de produção?';
+  if(!confirm(msg))return;
+  state.estoqueInicial={data:todayISO(),kg:estoqueAtualKg()};
+  state.entradas=[];
+  saveState();
+  renderRelatorio();
+}
+function registrarEntrada(){
+  var nome=prompt('Descrição da entrada (ex: Compra de recria, Nascimentos de agosto):');
+  if(nome==null||!nome.trim())return;
+  var cabTxt=prompt('Quantas cabeças entraram?');
+  if(cabTxt==null)return;
+  var cab=parseInt(cabTxt,10);
+  if(!cab||cab<=0){alert('Quantidade de cabeças inválida.');return;}
+  var pesoTxt=prompt('Peso médio (kg) dessas cabeças?');
+  if(pesoTxt==null)return;
+  var peso=parseFloat(pesoTxt.replace(',','.'));
+  if(!peso||peso<=0){alert('Peso inválido.');return;}
+  var data=prompt('Data da entrada (AAAA-MM-DD):',todayISO());
+  if(data==null)return;
+  if(!Array.isArray(state.entradas))state.entradas=[];
+  state.entradas.push({id:makeId('ent'),data:data.trim()||todayISO(),nome:nome.trim(),cab:cab,peso:peso,kg:cab*peso});
+  saveState();
+  renderRelatorio();
+}
+function renderRelatorio(){
+  var box=el('relatorioProducaoBox');
+  if(!box)return;
+  if(!state.estoqueInicial){
+    box.innerHTML='<div class="paper" style="padding:16px 20px;text-align:center;color:#6b756f;">Nenhum período iniciado ainda. Clique em "📅 Marcar início do período" pra começar a acompanhar a produção da fazenda.</div>';
+    el('relatorioRotacaoBox').innerHTML=renderRotacaoResumo();
+    return;
+  }
+  var estoqueAtual=estoqueAtualKg();
+  var entradas=(state.entradas||[]).filter(function(e){return e.data>=state.estoqueInicial.data;});
+  var entradasKg=entradas.reduce(function(s,e){return s+e.kg;},0);
+  var saidas=state.planos.filter(planoIsSaida).filter(function(p){return (p.dataVenda||p.dataConfirmacao)>=state.estoqueInicial.data;});
+  var saidasKg=saidas.reduce(function(s,p){return s+p.cab*p.peso;},0);
+  var producao=(estoqueAtual+saidasKg)-(state.estoqueInicial.kg+entradasKg);
+  var areaTotal=state.piquetes.reduce(function(s,p){return s+(p.area||0);},0);
+  var producaoPorHa=areaTotal>0?producao/areaTotal:null;
+  var dias=Math.max(1,Math.round((new Date(todayISO())-new Date(state.estoqueInicial.data))/86400000));
+
+  box.innerHTML='<div class="paper" style="padding:18px 20px;">'+
+    '<div style="font-size:12px;opacity:.7;margin-bottom:10px;">Período: '+state.estoqueInicial.data+' até hoje ('+dias+' dia(s))</div>'+
+    '<div class="kpis-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">'+
+      '<div class="kpi"><div class="l">Estoque inicial</div><div class="v mono">'+fmt(state.estoqueInicial.kg,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Entradas no período</div><div class="v mono">'+fmt(entradasKg,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Saídas no período</div><div class="v mono">'+fmt(saidasKg,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Estoque atual</div><div class="v mono">'+fmt(estoqueAtual,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Produção (kg)</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+fmt(producao,0)+'</div></div>'+
+      '<div class="kpi"><div class="l">Produção por hectare</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+(producaoPorHa!=null?fmt(producaoPorHa,1)+' kg/ha':'—')+'</div></div>'+
+    '</div>'+
+    (entradas.length?'<div style="margin-top:14px;font-size:12px;"><b>Entradas registradas:</b><ul style="margin:6px 0 0;padding-left:18px;">'+entradas.map(function(e){return '<li>'+e.data+' — '+e.nome+': '+fmtInt(e.cab)+' cab × '+fmt(e.peso,1)+' kg = '+fmt(e.kg,0)+' kg</li>';}).join('')+'</ul></div>':'')+
+    (saidas.length?'<div style="margin-top:14px;font-size:12px;"><b>Saídas no período:</b><ul style="margin:6px 0 0;padding-left:18px;">'+saidas.map(function(p){return '<li>'+(p.dataVenda||p.dataConfirmacao)+' — '+p.loteName+': '+fmtInt(p.cab)+' cab × '+fmt(p.peso,1)+' kg = '+fmt(p.cab*p.peso,0)+' kg</li>';}).join('')+'</ul></div>':'')+
+  '</div>';
+  el('relatorioRotacaoBox').innerHTML=renderRotacaoResumo();
+}
+function renderRotacaoResumo(){
+  var comRotacao=state.planos.filter(function(pl){return pl.piquetes.length>1 && pl.rotacao;});
+  if(!comRotacao.length)return '<p style="font-size:12px;opacity:.6;">Nenhum piquetão com rotação configurada ainda.</p>';
+  return comRotacao.map(function(pl){
+    var rot=pl.rotacao,diasAtivo=diasEntreDatas(rot.dataEntradaAtual),passou=diasAtivo>=rot.diasOcupacaoAlvo;
+    var ativo=pl.piquetes.find(function(p){return p.id===rot.piqueteAtivoId;});
+    return '<div style="padding:8px 0;border-bottom:1px solid #E5E0CC;font-size:12.5px;">'+
+      '<b>'+pl.loteName+'</b> — 🟢 '+(ativo?ativo.name:'?')+' há '+diasAtivo+' dia(s)'+
+      (passou?' <span style="color:#A63D2F;font-weight:700;">(passou do alvo de '+rot.diasOcupacaoAlvo+')</span>':' (alvo: '+rot.diasOcupacaoAlvo+' dias)')+
+    '</div>';
+  }).join('');
+}
 function piquetePortionsAtivas(piqueteId){
   var portions=[];
   state.planos.forEach(function(pl){
@@ -2232,6 +2331,7 @@ function renderAll(){
   if(state.currentPage==='planos') renderPlanos();
   if(state.currentPage==='situacao') renderSituacao();
   if(state.currentPage==='controlpasto') renderControlPasto();
+  if(state.currentPage==='relatorio') renderRelatorio();
 }
 function situacaoData(nmeses){
   nmeses=nmeses||6;
@@ -3500,6 +3600,8 @@ function gerarRecorridaEconomica(){
 }
 el('btnRecorridaEco').addEventListener('click',gerarRecorridaEconomica);
 el('btnImportarMovimentacoes').addEventListener('click',function(){el('importMovimentacoesFile').click();});
+el('btnMarcarInicioPeriodo').addEventListener('click',marcarInicioPeriodo);
+el('btnRegistrarEntrada').addEventListener('click',registrarEntrada);
 el('importMovimentacoesFile').addEventListener('change',importarMovimentacoes);
 
 el('btnSituacaoExcel').addEventListener('click',function(){
