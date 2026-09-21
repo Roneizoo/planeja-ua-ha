@@ -1622,8 +1622,11 @@ function renderRelatorio(){
   var areaTotal=state.piquetes.reduce(function(s,p){return s+(p.area||0);},0);
   var producaoPorHa=areaTotal>0?producao/areaTotal:null;
   var dias=Math.max(1,Math.round((new Date(todayISO())-new Date(state.estoqueInicial.data))/86400000));
-  var producaoPorHaAno=producaoPorHa!=null?(producaoPorHa/dias)*365:null;
+  var pertoDoAno=dias>=330;
 
+  var proj365=estoqueProjetadoKg(365);
+  var producaoMetaAno=proj365-estoqueAtual;
+  var producaoMetaPorHaAno=areaTotal>0?producaoMetaAno/areaTotal:null;
   var proj30=estoqueProjetadoKg(30),proj90=estoqueProjetadoKg(90);
   var ganhoProj30=proj30-estoqueAtual,ganhoProj90=proj90-estoqueAtual;
 
@@ -1634,21 +1637,24 @@ function renderRelatorio(){
       '<div class="kpi"><div class="l">Entradas no período</div><div class="v mono">'+fmt(entradasKg,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Saídas no período</div><div class="v mono">'+fmt(saidasKg,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Estoque atual</div><div class="v mono">'+fmt(estoqueAtual,0)+' kg</div></div>'+
-      '<div class="kpi"><div class="l">Produção (kg) em '+dias+' dia(s)</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+fmt(producao,0)+'</div></div>'+
-      '<div class="kpi"><div class="l">Produção por ha/ano (projetada)</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+(producaoPorHaAno!=null?fmt(producaoPorHaAno,0)+' kg/ha/ano':'—')+'</div></div>'+
+      '<div class="kpi"><div class="l">Produção real no período</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+fmt(producao,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Produção real por hectare</div><div class="v mono" style="color:#1F5C39;font-weight:900;">'+(producaoPorHa!=null?fmt(producaoPorHa,1)+' kg/ha':'—')+'</div></div>'+
     '</div>'+
-    '<div style="font-size:11px;opacity:.65;margin-top:8px;">A produção por ha/ano é o ritmo dos últimos '+dias+' dia(s) projetado pra um ano inteiro — quanto mais dias o período tiver, mais confiável esse número fica. Ainda não é um resultado fechado de ano.</div>'+
+    '<div style="font-size:11px;opacity:.65;margin-top:8px;">'+(pertoDoAno?'Período com '+dias+' dias — já dá pra tratar como um fechamento anual.':'Isso é o resultado real dos '+dias+' dia(s) já passados — não é esticado pra virar "por ano". Só vira um número de ano de verdade quando o período chegar perto de 365 dias, com o gado repesado de novo.')+'</div>'+
     (entradas.length?'<div style="margin-top:14px;font-size:12px;"><b>Entradas registradas:</b><ul style="margin:6px 0 0;padding-left:18px;">'+entradas.map(function(e){return '<li>'+e.data+' — '+e.nome+': '+fmtInt(e.cab)+' cab × '+fmt(e.peso,1)+' kg = '+fmt(e.kg,0)+' kg</li>';}).join('')+'</ul></div>':'')+
     (saidas.length?'<div style="margin-top:14px;font-size:12px;"><b>Saídas no período:</b><ul style="margin:6px 0 0;padding-left:18px;">'+saidas.map(function(p){return '<li>'+(p.dataVenda||p.dataConfirmacao)+' — '+p.loteName+': '+fmtInt(p.cab)+' cab × '+fmt(p.peso,1)+' kg = '+fmt(p.cab*p.peso,0)+' kg</li>';}).join('')+'</ul></div>':'')+
   '</div>'+
   '<div class="paper" style="padding:18px 20px;margin-top:14px;">'+
-    '<h3 style="margin:0 0 10px;color:#244b35;font-size:14px;">Projeção de peso (pelo GMD cadastrado, se nada mais mudar)</h3>'+
+    '<h3 style="margin:0 0 10px;color:#244b35;font-size:14px;">Produção projetada (meta, pelo GMD cadastrado)</h3>'+
+    '<p style="font-size:12px;opacity:.75;margin:0 0 10px;">Não é o resultado real — é quanto o rebanho de hoje deveria produzir num ano inteiro <b>se</b> manter o ritmo de ganho de peso da tabela de GMD (aba Visão Geral). Serve pra comparar com uma meta e ver se o estoque atual é capaz de alcançá-la.</p>'+
     '<div class="kpis-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">'+
       '<div class="kpi"><div class="l">Estoque hoje</div><div class="v mono">'+fmt(estoqueAtual,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Projeção em 30 dias</div><div class="v mono">'+fmt(proj30,0)+' kg <span style="font-size:11px;color:#4C7A57;">(+'+fmt(ganhoProj30,0)+')</span></div></div>'+
       '<div class="kpi"><div class="l">Projeção em 90 dias</div><div class="v mono">'+fmt(proj90,0)+' kg <span style="font-size:11px;color:#4C7A57;">(+'+fmt(ganhoProj90,0)+')</span></div></div>'+
+      '<div class="kpi"><div class="l">Produção meta (365 dias)</div><div class="v mono" style="font-weight:900;">'+fmt(producaoMetaAno,0)+' kg</div></div>'+
+      '<div class="kpi"><div class="l">Produção meta por ha/ano</div><div class="v mono" style="font-weight:900;">'+(producaoMetaPorHaAno!=null?fmt(producaoMetaPorHaAno,0)+' kg/ha/ano':'—')+'</div></div>'+
     '</div>'+
-    '<div style="font-size:11px;opacity:.65;margin-top:8px;">Considera só o rebanho de hoje ganhando peso pelo GMD da aba Visão Geral — não conta futuras entradas ou saídas que ainda vão acontecer.</div>'+
+    '<div style="font-size:11px;opacity:.65;margin-top:8px;">Considera só o rebanho de hoje (cabeças efetivas, descontando saídas) ganhando peso pelo GMD alvo — não conta entradas e saídas futuras que ainda vão acontecer.</div>'+
   '</div>';
   el('relatorioRotacaoBox').innerHTML=renderRotacaoResumo();
 }
