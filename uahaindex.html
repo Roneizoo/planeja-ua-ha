@@ -1530,6 +1530,17 @@ function ensureSaidaPiquete(){
 function planoIsSaida(pl){
   return pl.piquetes.some(function(it){return it.saida;});
 }
+function cabecasSaidaPorLote(){
+  var mapa={};
+  state.planos.forEach(function(pl){
+    if(planoIsSaida(pl)) mapa[pl.loteId]=(mapa[pl.loteId]||0)+(pl.cab||0);
+  });
+  return mapa;
+}
+function loteAnmEfetivo(l,saidaMapa){
+  var saida=(saidaMapa||cabecasSaidaPorLote())[l.id]||0;
+  return Math.max(0,l.anm-saida);
+}
 function piquetePortionsAtivas(piqueteId){
   var portions=[];
   state.planos.forEach(function(pl){
@@ -1704,14 +1715,16 @@ function barrilHTML(usedUA,capUA,suppressMsg){
 // ---------- home page ----------
 function renderInicio(){
   var lotesAtivos=state.lotes.filter(function(l){return l.ativo!==false;});
+  var saidaMapa=cabecasSaidaPorLote();
   var totalArea=state.piquetes.reduce(function(s,p){return s+(p.area||0);},0);
-  var totalUA=lotesAtivos.reduce(function(s,l){return s+loteUA(l);},0);
+  var totalCab=lotesAtivos.reduce(function(s,l){return s+loteAnmEfetivo(l,saidaMapa);},0);
+  var totalUA=lotesAtivos.reduce(function(s,l){return s+loteAnmEfetivo(l,saidaMapa)*l.pv/state.uaKg;},0);
   var uaHaAtual= totalArea>0 ? totalUA/totalArea : null;
   var mIdx=new Date(state.dataEstudo+'T00:00:00').getMonth();
   var gmdAtual=efetivoGmd(mIdx);
   var kpis=[
     {l:'Área total (piquetes c/ área)',v:fmt(totalArea,2)+' ha'},
-    {l:'Total de cabeças',v:fmtInt(lotesAtivos.reduce(function(s,l){return s+l.anm;},0))},
+    {l:'Total de cabeças',v:fmtInt(totalCab)},
     {l:'UA total do rebanho',v:fmt(totalUA,1)},
     {l:'UA/ha atual da fazenda',v:uaHaAtual!=null?fmt(uaHaAtual,2):'—'}
   ];
@@ -1722,8 +1735,8 @@ function renderInicio(){
   var dataRef=new Date(state.dataEstudo+'T00:00:00');
   var mi=buildMonthsInfo(dataRef,12);
   var targetArr=[], projArr=[];
-  var pesoMedio0 = totalUA>0 ? (lotesAtivos.reduce(function(s,l){return s+l.anm*l.pv;},0)/lotesAtivos.reduce(function(s,l){return s+l.anm;},1)) : 0;
-  var totalAnm = lotesAtivos.reduce(function(s,l){return s+l.anm;},0);
+  var pesoMedio0 = totalCab>0 ? (lotesAtivos.reduce(function(s,l){return s+loteAnmEfetivo(l,saidaMapa)*l.pv;},0)/totalCab) : 0;
+  var totalAnm = totalCab;
   for(var i=0;i<12;i++){
     var calMonth=(mIdx+i)%12;
     targetArr.push(state.capAjustado[calMonth]);
@@ -1780,6 +1793,28 @@ function renderInicio(){
 }
 
 // ---------- lotes page ----------
+function dividirLote(id){
+  var l=state.lotes.find(function(x){return x.id===id;});
+  if(!l)return;
+  var jaTemPlano=planosDistribuicao().some(function(p){return p.loteId===id;});
+  if(jaTemPlano){alert('Esse lote já tem plano de distribuição em andamento (rascunho ou confirmado). Desfaça ou confirme o plano antes de dividir.');return;}
+  if(l.anm<2){alert('Esse lote só tem '+l.anm+' cabeça(s) — não dá pra dividir em duas partes.');return;}
+  var qtdTxt=prompt('Dividir "'+l.lote+'" ('+l.anm+' cabeças) em duas partes.\nQuantas cabeças ficam na primeira parte?',String(Math.floor(l.anm/2)));
+  if(qtdTxt==null)return;
+  var qtdA=parseInt(qtdTxt,10);
+  if(!qtdA||qtdA<=0||qtdA>=l.anm){alert('Quantidade inválida — precisa ser maior que 0 e menor que '+l.anm+'.');return;}
+  var qtdB=l.anm-qtdA;
+  var nomeA=prompt('Nome da primeira parte:',l.lote+' A');
+  if(nomeA==null)return;
+  var nomeB=prompt('Nome da segunda parte:',l.lote+' B');
+  if(nomeB==null)return;
+  var novoA={id:makeId('l'),lote:(nomeA.trim()||l.lote+' A'),anm:qtdA,pv:l.pv,categoria:l.categoria,piqueteAtual:l.piqueteAtual,ativo:true};
+  var novoB={id:makeId('l'),lote:(nomeB.trim()||l.lote+' B'),anm:qtdB,pv:l.pv,categoria:l.categoria,piqueteAtual:l.piqueteAtual,ativo:true};
+  state.lotes.push(novoA,novoB);
+  state.lotes=state.lotes.filter(function(x){return x.id!==id;});
+  saveState();
+  renderLotes();
+}
 function renderLotes(){
   var todosLotes=state.lotes.slice();
   var mostrarTodos = el('loteFiltroAtivo').value==='todos';
@@ -1808,7 +1843,7 @@ function renderLotes(){
       '<td style="text-align:right" class="mono">'+fmt(l.pv,1)+'</td>'+
       '<td style="text-align:right" class="mono">'+fmt(loteUA(l),1)+'</td>'+
       '<td style="text-align:center"><input type="checkbox" data-toggle-ativo="'+l.id+'" '+(l.ativo!==false?'checked':'')+'></td>'+
-      '<td><button class="btn-x" data-del-lote="'+l.id+'" title="excluir permanentemente">×</button></td>'+
+      '<td style="white-space:nowrap;"><button class="btn-ghost" data-dividir-lote="'+l.id+'" title="dividir em dois lotes" style="font-size:11px;padding:3px 8px;margin-right:4px;">Dividir</button><button class="btn-x" data-del-lote="'+l.id+'" title="excluir permanentemente">×</button></td>'+
     '</tr>';
   }).join('');
   el('lotesTableBody').innerHTML=html;
@@ -1890,14 +1925,17 @@ function renderLoteSelecionado(){
   var restanteAntes=l.anm-loteConfirmedAllocated(l.id);
   if(state.testCab==null) state.testCab=restanteAntes;
   if(state.testPeso==null) state.testPeso=l.pv;
+  if(!state.testDataVenda) state.testDataVenda=todayISO();
   var distribuido=loteConfirmedAllocated(l.id), pct=l.anm?Math.min(distribuido/l.anm*100,100):0;
+  var temSaidaNoGrupo=(state.testGroup||[]).some(function(pid){var p=piqueteById(pid);return p&&p.saida;});
   el('btnConfirmarPlano').textContent=state.editingPlanId?'Salvar alteração':'Adicionar ao planejamento';
   box.innerHTML='<div style="padding:11px 2px 2px;">'+
     '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap;"><div style="font-weight:700;font-size:15px;">'+l.lote+' <span class="tag">'+l.categoria+'</span>'+(l.piqueteAtual?'<span class="tag" style="margin-left:5px;background:#DCEAF5;color:#274B63;">está no '+l.piqueteAtual+'</span>':'')+'</div><div class="mono" style="font-size:12px;">'+fmtInt(distribuido)+' / '+fmtInt(l.anm)+' cabeças distribuídas</div></div>'+
     '<div class="dist-progress"><i style="width:'+pct+'%"></i></div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'+
       '<label style="font-size:11px;margin-top:10px;">Cabeças nesta distribuição<br><input id="testCabInput" type="number" min="1" max="'+restanteAntes+'" value="'+state.testCab+'" style="width:110px;"></label>'+
-      '<label style="font-size:11px;margin-top:10px;">Peso médio (kg)<br><input id="testPesoInput" type="number" step="0.1" value="'+state.testPeso.toFixed(1)+'" style="width:110px;"></label>'+
+      '<label style="font-size:11px;margin-top:10px;">Peso médio (kg)'+(temSaidaNoGrupo?' <span style="color:#A63D2F;">(peso de venda)</span>':'')+'<br><input id="testPesoInput" type="number" step="0.1" value="'+state.testPeso.toFixed(1)+'" style="width:110px;"></label>'+
+      (temSaidaNoGrupo?'<label style="font-size:11px;margin-top:10px;">Data da venda<br><input id="testDataVendaInput" type="date" value="'+state.testDataVenda+'" style="width:140px;"></label>':'')+
       '<span class="mono" style="font-size:11px;color:#6B756E;margin-top:24px;">'+fmtInt(restanteAntes)+' cabeça(s) ainda sem plano</span>'+
     '</div>'+
   '</div>';
@@ -2765,7 +2803,7 @@ function handleImportLote(evt){
       if(!confirm('Isso vai substituir os '+state.lotes.length+' lote(s) atuais pelos '+novos.length+' do arquivo (uso: trocar de fazenda). Os planos confirmados serão apagados. Continuar?')){ el('importLoteMsg').textContent='Importação cancelada.'; return; }
       state.lotes=novos;
       state.planos=[];
-      state.selectedLoteId=null; state.testGroup=[]; state.testCab=null; state.testPeso=null;
+      state.selectedLoteId=null; state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null;
       el('importLoteMsg').textContent='✅ '+novos.length+' lote(s) importado(s) — substituiu os anteriores'+(duplicados.length?' · '+duplicados.length+' nome(s) repetido(s) renomeado(s): '+duplicados.slice(0,4).join('; ')+(duplicados.length>4?'…':''):'');
       saveState(); renderAll();
     }catch(ex){ el('importLoteMsg').textContent='⚠ erro: '+ex.message; }
@@ -3104,11 +3142,13 @@ el('btnLimparLotes').addEventListener('click',function(){
     var idsRemovidos=state.lotes.map(function(l){return l.id;});
     state.lotes=[];
     state.planos=state.planos.filter(function(p){return idsRemovidos.indexOf(p.loteId)===-1;});
-    state.selectedLoteId=null; state.testGroup=[]; state.testCab=null; state.testPeso=null;
+    state.selectedLoteId=null; state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null;
     saveState(); renderLotes();
   }
 });
 el('lotesTableBody').addEventListener('click',function(e){
+  var idDividir=e.target.getAttribute('data-dividir-lote');
+  if(idDividir){ dividirLote(idDividir); return; }
   var id=e.target.getAttribute('data-del-lote');
   if(id){
     var l=loteById(id);
@@ -3118,7 +3158,7 @@ el('lotesTableBody').addEventListener('click',function(e){
     state._lastDeletedLote={lote:l, planos:planosDoLote};
     state.lotes=state.lotes.filter(function(x){return x.id!==id;});
     state.planos=state.planos.filter(function(p){return p.loteId!==id;});
-    if(state.selectedLoteId===id){ state.selectedLoteId=null; state.testGroup=[]; state.testCab=null; state.testPeso=null; }
+    if(state.selectedLoteId===id){ state.selectedLoteId=null; state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null; }
     saveState();
     el('loteDeleteMsg').innerHTML='Lote "'+l.lote+'" excluído. <button class="btn-ghost" id="btnDesfazerDelLote" style="font-size:11px;padding:3px 9px;">desfazer</button>';
     renderLotes();
@@ -3263,7 +3303,7 @@ el('loteSearchResults').addEventListener('click',function(e){
   var row=e.target.closest('[data-pick-lote]');
   var id=row&&row.getAttribute('data-pick-lote');
   if(id){
-    state.selectedLoteId=id; state.testGroup=[]; state.testCab=null; state.testPeso=null;state.editingPlanId=null;
+    state.selectedLoteId=id; state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null;state.editingPlanId=null;
     el('piqueteSearch').value='';
     saveState(); renderLoteSearch(); renderLoteSelecionado(); renderPiqueteSearch(); renderGrupo(); renderDistribuicoesConfirmadas();
   }
@@ -3271,6 +3311,7 @@ el('loteSearchResults').addEventListener('click',function(e){
 el('loteSelecionadoBox').addEventListener('input',function(e){
   if(e.target.id==='testCabInput'){ state.testCab=parseInt(e.target.value,10)||0; saveState(); renderGrupo(); }
   if(e.target.id==='testPesoInput'){ state.testPeso=parseFloat(e.target.value)||0; saveState(); renderGrupo(); }
+  if(e.target.id==='testDataVendaInput'){ state.testDataVenda=e.target.value; saveState(); }
 });
 el('piqueteSearch').addEventListener('input',renderPiqueteSearch);
 el('piqueteSearchResults').addEventListener('click',function(e){
@@ -3304,12 +3345,14 @@ el('btnConfirmarPlano').addEventListener('click',function(){
     var p=piqueteById(pid);
     return {id:pid,name:p?p.name:'?',area:p?p.area:null,capSnapshot:p?piqueteCapacidade(p):null,saida:p?!!p.saida:false};
   });
+  var ehSaida=piquetesSnapshot.some(function(p){return p.saida;});
   var novoPlano={id:state.editingPlanId||makeId('pl'),loteId:l.id,loteName:l.lote,piqueteAnterior:(l.piqueteAtual||'').trim(),cab:cab,peso:peso,piquetes:piquetesSnapshot,dataEstudo:state.dataEstudo,dataConfirmacao:todayISO()};
+  if(ehSaida)novoPlano.dataVenda=state.testDataVenda||todayISO();
   if(!Array.isArray(state.rascunhoPlanos))state.rascunhoPlanos=JSON.parse(JSON.stringify(state.planos||[]));
   if(state.editingPlanId){var editIdx=state.rascunhoPlanos.findIndex(function(p){return p.id===state.editingPlanId;});if(editIdx>=0)state.rascunhoPlanos[editIdx]=novoPlano;else state.rascunhoPlanos.push(novoPlano);}
   else state.rascunhoPlanos.push(novoPlano);
   state.editingPlanId=null;
-  state.testGroup=[]; state.testCab=null; state.testPeso=null;
+  state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null;
   if(loteRestante(l)<=0) state.selectedLoteId=null;
   saveState();
   renderAll();
@@ -3333,6 +3376,7 @@ el('pg-distribuicao').addEventListener('click',function(e){
     var pl=planosDistribuicao().find(function(p){return p.id===edit.getAttribute('data-edit-draft');});if(!pl)return;
     state.editingPlanId=pl.id;state.selectedLoteId=pl.loteId;state.testCab=pl.cab;state.testPeso=pl.peso;
     state.testGroup=pl.piquetes.map(function(p){return p.id;}).filter(function(id){return !!piqueteById(id);});
+    state.testDataVenda=pl.dataVenda||todayISO();
     saveState();renderAll();el('loteSelecionadoBox').scrollIntoView({behavior:'smooth',block:'start'});return;
   }
   var rem=e.target.closest('[data-remove-draft]');
