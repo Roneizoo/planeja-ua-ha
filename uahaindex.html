@@ -440,6 +440,7 @@ body{min-height:100vh;}
     <button class="navbtn" data-pg="situacao">●  Situação atual</button>
     <button class="navbtn" data-pg="controlpasto">◉  Control Pasto</button>
     <button class="navbtn" data-pg="relatorio">📊  Relatório</button>
+    <button class="navbtn" data-pg="comparar">🔀  Comparar Planos</button>
     <button class="navbtn" data-pg="comousar">❓  Como usar</button>
   </div>
 
@@ -568,10 +569,10 @@ body{min-height:100vh;}
     <div id="piquetesMediaUaHa" class="kpi" style="max-width:280px;margin-bottom:10px;"></div>
     <div class="paper" style="padding:10px 4px;overflow-x:auto;">
       <table style="width:100%;table-layout:fixed;"><colgroup>
-        <col style="width:26%"><col style="width:22%"><col style="width:22%"><col style="width:24%"><col style="width:6%">
+        <col style="width:20%"><col style="width:16%"><col style="width:16%"><col style="width:14%"><col style="width:18%"><col style="width:6%">
       </colgroup><thead><tr>
         <th>Piquete</th><th style="text-align:right">Área (ha)</th><th style="text-align:right">UA/ha alvo</th>
-        <th style="text-align:right">Capacidade (UA)</th><th></th>
+        <th style="text-align:right">Capacidade (UA)</th><th>Grupo</th><th></th>
       </tr></thead><tbody id="piquetesTableBody"></tbody></table>
     </div>
   </div>
@@ -802,6 +803,17 @@ body{min-height:100vh;}
       <p style="font-size:12px;opacity:.7;margin:0 0 10px;">Situação de ocupação/descanso de cada plano com mais de um piquete — a mesma informação da aba Planos confirmados, reunida aqui pra olhar junto com a produção.</p>
       <div id="relatorioRotacaoBox"></div>
     </div>
+  </div>
+
+  <div id="pg-comparar" class="pg">
+    <div class="paper" style="padding:18px 20px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <h2 class="serif" style="font-size:18px;margin:0;">Comparar Planos — antes e depois</h2>
+        <button class="btn-gold" id="btnMarcarSnapshotAntes">📍 Marcar situação de referência (antes)</button>
+      </div>
+      <p style="font-size:12.5px;opacity:.75;margin-top:8px;">Se a fazenda usa Control Pasto, o "antes" é sempre o arquivo importado. Sem Control Pasto, marque a referência antes de mexer na Distribuição.</p>
+    </div>
+    <div id="compararBox"></div>
   </div>
 
   <div id="pg-comousar" class="pg">
@@ -1605,6 +1617,116 @@ function registrarEntrada(){
   saveState();
   renderRelatorio();
 }
+function estadoAtualPorPiquete(){
+  var mapa={};
+  state.piquetes.filter(function(p){return !p.saida;}).forEach(function(p){mapa[p.name]={cab:0,kg:0,lotes:[]};});
+  state.planos.filter(function(pl){return !planoIsSaida(pl);}).forEach(function(pl){
+    pl.piquetes.forEach(function(pp){
+      if(!mapa[pp.name])mapa[pp.name]={cab:0,kg:0,lotes:[]};
+      mapa[pp.name].cab+=pl.cab;
+      mapa[pp.name].kg+=pl.cab*pl.peso;
+      if(mapa[pp.name].lotes.indexOf(pl.loteName)===-1)mapa[pp.name].lotes.push(pl.loteName);
+    });
+  });
+  Object.keys(mapa).forEach(function(k){var m=mapa[k];m.peso=m.cab?m.kg/m.cab:0;m.ua=m.kg/(state.uaKg||450);});
+  return mapa;
+}
+function estadoAntesControlPasto(){
+  var rows=cpPhysicalRows();
+  if(!rows.length)return null;
+  var mapa={};
+  rows.forEach(function(r){
+    var cab=Number(r.animais)||0,peso=Number(r.pesoCab)||0;
+    mapa[r.nome]={cab:cab,kg:cab*peso,peso:peso,ua:Number(r.ua)||0,lotes:cab>0?['Control Pasto']:[]};
+  });
+  return mapa;
+}
+function marcarSnapshotAntes(){
+  var msg=state.snapshotAntes?
+    'Já existe uma referência marcada em '+new Date(state.snapshotAntes.data).toLocaleString('pt-BR')+'. Marcar de novo substitui essa. Continuar?':
+    'Marcar agora ('+new Date().toLocaleString('pt-BR')+') como a situação de referência (antes)?';
+  if(!confirm(msg))return;
+  state.snapshotAntes={data:new Date().toISOString(),estado:estadoAtualPorPiquete()};
+  saveState();
+  renderComparar();
+}
+function renderComparar(){
+  var usaCP=!!cpData();
+  var antes=usaCP?estadoAntesControlPasto():(state.snapshotAntes?state.snapshotAntes.estado:null);
+  var depois=estadoAtualPorPiquete();
+  var box=el('compararBox');
+  if(!box)return;
+  var origemTxt=usaCP?'Control Pasto (arquivo importado)':(state.snapshotAntes?'Referência marcada em '+new Date(state.snapshotAntes.data).toLocaleString('pt-BR'):null);
+  if(!antes){
+    box.innerHTML='<div class="paper" style="padding:16px 20px;text-align:center;color:#6b756f;">'+
+      (usaCP?'Nenhum dado do Control Pasto encontrado.':'Nenhuma referência marcada ainda. Clique em "📍 Marcar situação de referência (antes)" antes de mexer na distribuição, pra depois poder comparar.')+
+      '</div>';
+    return;
+  }
+  var ondeAntes={},ondeDepois={};
+  Object.keys(antes).forEach(function(pn){(antes[pn].lotes||[]).forEach(function(ln){if(!ondeAntes[ln])ondeAntes[ln]=[];ondeAntes[ln].push(pn);});});
+  Object.keys(depois).forEach(function(pn){(depois[pn].lotes||[]).forEach(function(ln){if(!ondeDepois[ln])ondeDepois[ln]=[];ondeDepois[ln].push(pn);});});
+
+  var pesoSaida=cpNum(el('simPesoSaida')&&el('simPesoSaida').value)||380;
+  var pesoEntrada=cpNum(el('simPesoEntrada')&&el('simPesoEntrada').value)||200;
+  var totalTirar=0,totalCabe=0;
+
+  var linhas=sortPiquetes(state.piquetes.filter(function(p){return !p.saida;})).map(function(p){
+    var a=antes[p.name]||{cab:0,peso:0,ua:0,lotes:[]};
+    var d=depois[p.name]||{cab:0,peso:0,ua:0,lotes:[]};
+    var saiu=(a.lotes||[]).filter(function(ln){return (d.lotes||[]).indexOf(ln)===-1;}).map(function(ln){
+      var destino=(ondeDepois[ln]||[]).filter(function(pn){return pn!==p.name;});
+      return ln+(destino.length?' → '+destino.join('+'):' (saiu do rebanho)');
+    });
+    var entrou=(d.lotes||[]).filter(function(ln){return (a.lotes||[]).indexOf(ln)===-1;}).map(function(ln){
+      var origem=(ondeAntes[ln]||[]).filter(function(pn){return pn!==p.name;});
+      return ln+(origem.length?' ← '+origem.join('+'):' (novo)');
+    });
+    var cap=piqueteCapacidade(p);
+    var vagaUA=cap!=null?cap-d.ua:null;
+    var simTxt='—';
+    if(vagaUA!=null){
+      if(vagaUA<-0.01){
+        var qtdTirar=Math.ceil((-vagaUA)*(state.uaKg||450)/pesoSaida);
+        totalTirar+=qtdTirar;
+        simTxt='<span style="color:#A63D2F;font-weight:700;">tirar '+qtdTirar+' de '+fmtInt(pesoSaida)+'kg</span>';
+      }else if(vagaUA>0.01){
+        var qtdCabe=Math.floor(vagaUA*(state.uaKg||450)/pesoEntrada);
+        totalCabe+=qtdCabe;
+        simTxt='<span style="color:#1F5C33;font-weight:700;">cabem +'+qtdCabe+' de '+fmtInt(pesoEntrada)+'kg</span>';
+      }else{
+        simTxt='no alvo';
+      }
+    }
+    return '<tr>'+
+      '<td>'+p.name+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmt(p.area,1)+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmt(p.uaHaAlvo,2)+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmtInt(a.cab)+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmtInt(d.cab)+'</td>'+
+      '<td style="font-size:11px;color:#A63D2F;">'+(saiu.length?saiu.join('<br>'):'—')+'</td>'+
+      '<td style="font-size:11px;color:#1F5C33;">'+(entrou.length?entrou.join('<br>'):'—')+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmt(a.ua,1)+' → '+fmt(d.ua,1)+'</td>'+
+      '<td style="text-align:right">'+simTxt+'</td>'+
+    '</tr>';
+  }).join('');
+
+  box.innerHTML='<div class="paper" style="padding:14px 16px;margin-bottom:12px;font-size:12px;">Comparando com: <b>'+origemTxt+'</b></div>'+
+    '<div class="paper" style="padding:14px 20px;margin-bottom:12px;">'+
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">'+
+        '<label style="font-size:11px;">Peso de saída pra simular (kg)<br><input id="simPesoSaida" type="number" value="'+pesoSaida+'" style="width:90px;"></label>'+
+        '<label style="font-size:11px;">Peso de entrada pra simular (kg)<br><input id="simPesoEntrada" type="number" value="'+pesoEntrada+'" style="width:90px;"></label>'+
+        '<div style="font-size:12.5px;">No total da fazenda: <b style="color:#A63D2F;">tirar '+totalTirar+'</b> de '+fmtInt(pesoSaida)+'kg · <b style="color:#1F5C33;">cabem +'+totalCabe+'</b> de '+fmtInt(pesoEntrada)+'kg</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="paper" style="padding:8px 4px;overflow-x:auto;">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>'+
+      '<th style="text-align:left;padding:4px 6px;">Piquete</th><th style="padding:4px 6px;">Ha</th><th style="padding:4px 6px;">UA/ha alvo</th>'+
+      '<th style="padding:4px 6px;">Cab. antes</th><th style="padding:4px 6px;">Cab. depois</th>'+
+      '<th style="padding:4px 6px;text-align:left;">Saiu</th><th style="padding:4px 6px;text-align:left;">Entrou</th>'+
+      '<th style="padding:4px 6px;">UA antes→depois</th><th style="padding:4px 6px;">Simulação</th>'+
+    '</tr></thead><tbody>'+linhas+'</tbody></table></div>';
+}
 function renderRelatorio(){
   var box=el('relatorioProducaoBox');
   if(!box)return;
@@ -2004,13 +2126,16 @@ function renderPiquetesPage(){
   }
   var mediaAtual=mediaUaHaAtual();
   el('piquetesMediaUaHa').innerHTML='<div class="l">Média UA/ha da fazenda (soma UA ÷ soma ha, piquetes ativos)</div><div class="v mono">'+(mediaAtual!=null?fmt(mediaAtual,2):'—')+'</div>';
-  var html=ordered.map(function(p){
+  var gruposExistentes=Array.from(new Set(state.piquetes.map(function(p){return (p.grupo||'').trim();}).filter(Boolean)));
+  var datalistHtml='<datalist id="gruposList">'+gruposExistentes.map(function(g){return '<option value="'+g+'">';}).join('')+'</datalist>';
+  var html=datalistHtml+ordered.map(function(p){
     if(p.saida){
       return '<tr>'+
         '<td>🚚 '+p.name+' <span class="tag">saída do rebanho</span></td>'+
         '<td style="text-align:right" class="mono">—</td>'+
         '<td style="text-align:right" class="mono">—</td>'+
         '<td style="text-align:right" class="mono">não conta na lotação</td>'+
+        '<td></td>'+
         '<td><button class="btn-x" data-del-piquete="'+p.id+'">×</button></td>'+
       '</tr>';
     }
@@ -2020,6 +2145,7 @@ function renderPiquetesPage(){
       '<td style="text-align:right"><input type="text" inputmode="decimal" data-area="'+p.id+'" value="'+(p.area==null?'':p.area)+'" style="width:85px;text-align:right;"></td>'+
       '<td style="text-align:right"><input type="text" inputmode="decimal" data-uaalvo="'+p.id+'" value="'+p.uaHaAlvo.toFixed(2)+'" style="width:70px;text-align:right;"></td>'+
       '<td style="text-align:right" class="mono">'+(cap!=null?fmt(cap,1):'—')+'</td>'+
+      '<td><input type="text" list="gruposList" data-grupo="'+p.id+'" value="'+(p.grupo||'')+'" placeholder="ex: A06" style="width:100%;"></td>'+
       '<td><button class="btn-x" data-del-piquete="'+p.id+'">×</button></td>'+
     '</tr>';
   }).join('');
@@ -2362,6 +2488,7 @@ function renderAll(){
   if(state.currentPage==='situacao') renderSituacao();
   if(state.currentPage==='controlpasto') renderControlPasto();
   if(state.currentPage==='relatorio') renderRelatorio();
+  if(state.currentPage==='comparar') renderComparar();
 }
 function situacaoData(nmeses){
   nmeses=nmeses||6;
@@ -2742,9 +2869,11 @@ function cpExportRecorrida(){
       var id=match&&match.id?match.id:'cp_'+String(r.itemId||g.parentId||gi+'_'+ri).replace(/[^A-Za-z0-9_-]/g,'_');
       var base=id,k=2;while(used[id])id=base+'_'+(k++);used[id]=1;
       var alvo=cpTargetForPhysical(r,defaultAlvo);
+      var grupoFinal=(match&&match.grupo&&match.grupo.trim())?match.grupo.trim():(g.parentId||'');
+      if(match&&!match.grupo&&g.parentId){match.grupo=g.parentId;}
       piqs.push({
         id:id,name:r.nome,area:Number(r.area),uaHaAlvo:alvo,
-        controlPastoParentId:g.parentId||'',controlPastoGrupo:g.label
+        controlPastoParentId:grupoFinal,controlPastoGrupo:grupoFinal
       });
       planPiqs.push({id:id,name:r.nome,area:Number(r.area),capSnapshot:Number(r.area)*alvo,saida:false});
     });
@@ -2761,6 +2890,7 @@ function cpExportRecorrida(){
     }
   });
   if(!piqs.length){alert('O arquivo não possui piquetes físicos com área válida para enviar à recorrida.');return;}
+  saveState();
   var payload={
     fazendaNome:state.fazendaNome||'Fazenda',uaKg:state.uaKg||450,
     dataEstudo:state.dataEstudo||todayISO(),lotes:[],piquetes:piqs,planos:plans,
@@ -2993,7 +3123,7 @@ function exportarSituacaoParaRecorrida(){
   var loteIds=lotesAtivos.map(function(l){return l.id;});
   var planosAtivos=state.planos.filter(function(pl){return loteIds.indexOf(pl.loteId)>=0&&!planoIsSaida(pl);});
   var piquetesFisicos=state.piquetes.filter(function(p){return !p.saida;}).map(function(p){
-    return {id:p.id,name:p.name,area:p.area,uaHaAlvo:p.uaHaAlvo,lastRecorrida:p.lastRecorrida||null};
+    return {id:p.id,name:p.name,area:p.area,uaHaAlvo:p.uaHaAlvo,lastRecorrida:p.lastRecorrida||null,controlPastoParentId:p.grupo||'',controlPastoGrupo:p.grupo||''};
   });
   if(!piquetesFisicos.length){alert('Cadastre os piquetes antes de preparar a recorrida.');return;}
   if(!planosAtivos.length&&!confirm('Não há animais em planos confirmados. Exportar mesmo assim uma recorrida somente com os piquetes?'))return;
@@ -3411,9 +3541,10 @@ el('btnAddPiquete2').addEventListener('click',function(){
 });
 el('piquetesTableBody').addEventListener('change',function(e){
   var t=e.target;
-  var idA=t.getAttribute('data-area'), idAlvo=t.getAttribute('data-uaalvo');
+  var idA=t.getAttribute('data-area'), idAlvo=t.getAttribute('data-uaalvo'), idGrupo=t.getAttribute('data-grupo');
   if(idA){ var p=piqueteById(idA); var raw=t.value.replace(',','.'); var v=parseFloat(raw); p.area=(t.value===''?null:(isNaN(v)?null:v)); }
   if(idAlvo){ var p2=piqueteById(idAlvo); p2.uaHaAlvo=parseFloat(t.value.replace(',','.'))||0; }
+  if(idGrupo){ var p3=piqueteById(idGrupo); p3.grupo=t.value.trim(); }
   saveState(); renderPiquetesPage();
 });
 el('btnAplicarUaHaTodos').addEventListener('click',function(){
@@ -3453,7 +3584,14 @@ el('piqueteSearchResults').addEventListener('click',function(e){
   var card=e.target.closest('[data-add-piquete]');
   var id=card&&card.getAttribute('data-add-piquete');
   if(id && state.selectedLoteId){
-    state.testGroup.push(id);
+    var clicado=piqueteById(id);
+    var grupo=clicado&&(clicado.grupo||'').trim();
+    if(grupo){
+      var doGrupo=state.piquetes.filter(function(p){return !p.saida&&(p.grupo||'').trim()===grupo&&state.testGroup.indexOf(p.id)===-1;});
+      doGrupo.forEach(function(p){state.testGroup.push(p.id);});
+    }else{
+      state.testGroup.push(id);
+    }
     saveState(); renderPiqueteSearch(); renderGrupo();
   }
 });
@@ -3636,6 +3774,10 @@ function gerarRecorridaEconomica(){
 el('btnRecorridaEco').addEventListener('click',gerarRecorridaEconomica);
 el('btnImportarMovimentacoes').addEventListener('click',function(){el('importMovimentacoesFile').click();});
 el('btnMarcarInicioPeriodo').addEventListener('click',marcarInicioPeriodo);
+el('btnMarcarSnapshotAntes').addEventListener('click',marcarSnapshotAntes);
+el('compararBox').addEventListener('input',function(e){
+  if(e.target.id==='simPesoSaida'||e.target.id==='simPesoEntrada')renderComparar();
+});
 el('btnRegistrarEntrada').addEventListener('click',registrarEntrada);
 el('importMovimentacoesFile').addEventListener('change',importarMovimentacoes);
 
