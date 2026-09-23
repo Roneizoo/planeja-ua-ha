@@ -402,6 +402,7 @@ body{min-height:100vh;}
 .cmpTable td{padding:6px 8px;border-bottom:1px solid #E5E0CC;vertical-align:middle;}
 .cmpCelNum{text-align:center;font-variant-numeric:tabular-nums;}
 .cmpCelTxt{text-align:left;}
+.cmpTable th:first-child,.cmpTable td:first-child{width:110px;max-width:110px;}
 .distSecaoTitulo{font-size:10.5px;opacity:.6;margin:8px 0 6px;width:100%;font-weight:700;letter-spacing:.03em;}
 #piquetesTableBody tr{cursor:pointer;}
 #piquetesTableBody tr:hover{background:#F7F3E8;}
@@ -1759,7 +1760,7 @@ function renderSimulacao(){
     '</div>'+
     '<div class="paper" style="padding:8px 4px;overflow-x:auto;">'+
     '<table class="cmpTable"><thead><tr>'+
-      '<th style="text-align:left;">Piquete</th><th>Ha</th><th>Qtd. atual</th><th>Peso atual</th><th>UA atual</th>'+
+      '<th style="text-align:left;">Piquete</th><th>Ha</th><th>Qtd. atual</th><th>Peso médio atual</th><th>UA atual</th>'+
       '<th>UA/ha atual</th><th>UA/ha alvo</th><th>Sair</th><th>Entrar</th>'+
       '<th>Qtd. simulada</th><th>UA simulada</th><th>Diferença</th>'+
     '</tr></thead><tbody>'+linhasHtml+'</tbody>'+
@@ -2805,7 +2806,7 @@ function cpImportRows(rows,fileName){
     item:cpFindCol(header,['item_id','item id']),parent:cpFindCol(header,['parent_id','parent id']),
     nome:cpFindCol(header,['nombre','nome']),tipo:cpFindCol(header,['tipo']),area:cpFindCol(header,['area (ha)','área (ha)','rea (ha)','area']),
     ua:cpFindCol(header,['lote ua total','ua total']),animais:cpFindCol(header,['ct. animales','ct animales','animales','animais']),
-    pesoTotal:cpFindCol(header,['peso vivo total']),pesoCab:cpFindCol(header,['peso vivo kg/cab','peso vivo kg / cab','peso vivo']),
+    pesoTotal:cpFindCol(header,['peso vivo total']),pesoCab:cpFindCol(header,['peso vivo kg/cab','peso vivo kg / cab','peso vivo kg cab']),
     ocup:cpFindCol(header,['ocupacion ua/ha','ocupación ua/ha','ocupacin ua/ha','ocupacao ua/ha']),capac:cpFindCol(header,['capac. sup. (ua/ha)','capac sup','capacidade']),
     md30:cpFindCol(header,['ua/ha md 01-30']),md60:cpFindCol(header,['ua/ha md 31-60']),md90:cpFindCol(header,['ua/ha md 61-90'])
   };
