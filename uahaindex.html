@@ -403,6 +403,12 @@ body{min-height:100vh;}
 .cmpCelNum{text-align:center;font-variant-numeric:tabular-nums;}
 .cmpCelTxt{text-align:left;}
 .cmpTable th:first-child,.cmpTable td:first-child{width:110px;max-width:110px;}
+.btn-x-placeholder{display:inline-block;width:24px;}
+.simInputSmall{width:48px;text-align:right;}
+.simCelDupla{white-space:nowrap;}
+.simLinhaDupla{display:flex;align-items:center;justify-content:center;gap:3px;}
+.simLinhaPeso{font-size:10px;opacity:.6;margin-top:3px;}
+.simLinhaPeso input{width:40px;}
 .distSecaoTitulo{font-size:10.5px;opacity:.6;margin:8px 0 6px;width:100%;font-weight:700;letter-spacing:.03em;}
 #piquetesTableBody tr{cursor:pointer;}
 #piquetesTableBody tr:hover{background:#F7F3E8;}
@@ -574,6 +580,11 @@ body{min-height:100vh;}
       <span style="font-size:10.5px;opacity:.6;">preenche todos de uma vez — depois é só ajustar os que forem diferentes</span>
     </div>
     <div id="importPiqueteMsg" style="font-size:11.5px;margin-bottom:8px;opacity:.75;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="btn-ghost" id="btnExportarEstrutura" style="font-size:11.5px;">💾 Exportar Estrutura (grupos e alvos)</button>
+      <button class="btn-ghost" id="btnImportarEstrutura" style="font-size:11.5px;">📥 Importar Estrutura</button>
+      <input type="file" id="importEstruturaFile" accept=".json" style="display:none;">
+    </div>
     <div id="recorridaMsg" style="font-size:11.5px;margin-bottom:8px;opacity:.8;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
       <div id="piquetesMediaUaHa" class="kpi" style="max-width:280px;"></div>
@@ -1572,6 +1583,49 @@ function mediaUaHaAtual(){
   var capTotal=ativos.reduce(function(s,p){return s+piqueteCapacidade(p);},0);
   return areaTotal>0?capTotal/areaTotal:null;
 }
+function blankState(){
+  return {fazendaNome:'',uaKg:450,dataEstudo:todayISO(),gmdAjuste:GMD_BASE.slice(),gmdPercent:new Array(12).fill(0),gmdStepPercent:5,
+    capMin:1.2,capMax:2.5,capBase:capacidadeCurveFromMinMax(1.2,2.5),capAjustado:capacidadeCurveFromMinMax(1.2,2.5),capPercent:new Array(12).fill(0),
+    lotes:[],piquetes:[],planos:[],rascunhoPlanos:null,recorridas:[],controlPasto:null,
+    currentPage:'inicio',selectedLoteId:null,testGroup:[],testCab:null,testPeso:null,testDataVenda:null,editingPlanId:null,
+    homeQuarter:false,loteSortKey:null,loteSortDir:1,
+    snapshotAntes:null,estoqueInicial:null,entradas:[],movimentosAplicados:[],
+    simTirar:{},simEntrar:{},simPesoSaidaLinha:{},simPesoEntradaLinha:{},piquetesParaAgrupar:[]};
+}
+function exportarEstrutura(){
+  var dados=state.piquetes.filter(function(p){return !p.saida;}).map(function(p){
+    return {name:p.name,uaHaAlvo:p.uaHaAlvo,grupo:p.grupo||''};
+  });
+  var payload={type:'planeja-estrutura-piquetes',version:1,fazendaNome:state.fazendaNome,geradoEm:new Date().toISOString(),piquetes:dados};
+  var txt=JSON.stringify(payload,null,2),blob=new Blob([txt],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='estrutura_'+(state.fazendaNome||'fazenda').replace(/[^a-zA-Z0-9]+/g,'_')+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function importarEstrutura(evt){
+  var file=evt.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var d=JSON.parse(reader.result);
+      if(!d||!Array.isArray(d.piquetes))throw new Error('Arquivo não parece ser uma estrutura de piquetes exportada.');
+      var mapa={};
+      d.piquetes.forEach(function(p){mapa[normalizarNomeControle(p.name)]=p;});
+      var aplicados=0;
+      state.piquetes.forEach(function(p){
+        var info=mapa[normalizarNomeControle(p.name)];
+        if(info){ if(info.grupo)p.grupo=info.grupo; if(info.uaHaAlvo!=null)p.uaHaAlvo=info.uaHaAlvo; aplicados++; }
+      });
+      saveState();
+      alert('Estrutura aplicada: '+aplicados+' piquete(s) atualizado(s) (grupo e UA/ha alvo).');
+      renderPiquetesPage();
+    }catch(ex){
+      alert('Não foi possível importar: '+ex.message);
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value='';
+}
 function ensureSaidaPiquete(){
   if(!state.piquetes.some(function(p){return p.saida;})){
     state.piquetes.push({id:makeId('p'),name:'Saída',area:null,uaHaAlvo:0,saida:true});
@@ -1706,27 +1760,42 @@ function renderSimulacao(){
       '</div>';
     return;
   }
-  var pesoSaida=cpNum(el('simPesoSaida')&&el('simPesoSaida').value)||380;
-  var pesoEntrada=cpNum(el('simPesoEntrada')&&el('simPesoEntrada').value)||200;
+  var pesoSaidaGlobal=cpNum(el('simPesoSaida')&&el('simPesoSaida').value)||380;
+  var pesoEntradaGlobal=cpNum(el('simPesoEntrada')&&el('simPesoEntrada').value)||200;
   if(!state.simTirar)state.simTirar={};
   if(!state.simEntrar)state.simEntrar={};
+  if(!state.simPesoSaidaLinha)state.simPesoSaidaLinha={};
+  if(!state.simPesoEntradaLinha)state.simPesoEntradaLinha={};
   var uaKg=state.uaKg||450;
   var linhas=linhasSimulacao(antes);
-  var totalAtual=0,totalSimulado=0,totalUaAtual=0,totalUaSimulado=0;
+  var totalAtual=0,totalSimulado=0,totalUaAtual=0,totalUaSimulado=0,totalKgAtual=0,totalKgSimulado=0;
 
   var linhasHtml=linhas.map(function(l){
     var vagaUA=l.cap-l.ua;
-    var sugestaoTirar=vagaUA<-0.01?Math.ceil((-vagaUA)*uaKg/pesoSaida):0;
-    var sugestaoEntrar=vagaUA>0.01?Math.floor(vagaUA*uaKg/pesoEntrada):0;
+    var sugestaoTirar=vagaUA<-0.01?Math.ceil((-vagaUA)*uaKg/pesoSaidaGlobal):0;
+    var sugestaoEntrar=vagaUA>0.01?Math.floor(vagaUA*uaKg/pesoEntradaGlobal):0;
     if(!(l.key in state.simTirar))state.simTirar[l.key]=sugestaoTirar;
     if(!(l.key in state.simEntrar))state.simEntrar[l.key]=sugestaoEntrar;
+    if(!(l.key in state.simPesoSaidaLinha))state.simPesoSaidaLinha[l.key]=l.peso||pesoSaidaGlobal;
+    if(!(l.key in state.simPesoEntradaLinha))state.simPesoEntradaLinha[l.key]=pesoEntradaGlobal;
     var tirar=state.simTirar[l.key]||0, entrar=state.simEntrar[l.key]||0;
-    var simulada=Math.max(0,l.cab-tirar+entrar);
-    var kgSimulado=Math.max(0,l.cab-tirar)*l.peso+entrar*pesoEntrada;
+    var pesoSairLinha=state.simPesoSaidaLinha[l.key]||l.peso||pesoSaidaGlobal;
+    var pesoEntrarLinha=state.simPesoEntradaLinha[l.key]||pesoEntradaGlobal;
+    var tirarEfetivo=Math.min(tirar,l.cab);
+    var simulada=Math.max(0,l.cab-tirarEfetivo+entrar);
+    var kgAtualLinha=l.cab*l.peso;
+    var kgQueSaiu=tirarEfetivo*pesoSairLinha;
+    var kgQueFicou=Math.max(0,kgAtualLinha-kgQueSaiu);
+    var kgQueEntrou=entrar*pesoEntrarLinha;
+    var kgSimulado=kgQueFicou+kgQueEntrou;
+    var pesoMedioSimulado=simulada>0?kgSimulado/simulada:0;
     var uaSimulada=kgSimulado/uaKg;
     var diff=simulada-l.cab;
     totalAtual+=l.cab;totalSimulado+=simulada;totalUaAtual+=l.ua;totalUaSimulado+=uaSimulada;
+    totalKgAtual+=kgAtualLinha;totalKgSimulado+=kgSimulado;
     var diffTxt=diff===0?'—':(diff>0?'<span style="color:#1F5C33;font-weight:700;">(+'+diff+')</span>':'<span style="color:#A63D2F;font-weight:700;">('+diff+')</span>');
+    var xTirar=sugestaoTirar>0?'<button class="btn-x" data-simtirar-zerar="'+l.key+'" title="não usar sugestão">✕</button>':'<span class="btn-x-placeholder"></span>';
+    var xEntrar=sugestaoEntrar>0?'<button class="btn-x" data-simentrar-zerar="'+l.key+'" title="não usar sugestão">✕</button>':'<span class="btn-x-placeholder"></span>';
     return '<tr>'+
       '<td class="cmpCelTxt">'+l.nome+(l.piquetes.length>1?' <span style="opacity:.55;font-size:10.5px;">('+l.piquetes.length+')</span>':'')+'</td>'+
       '<td class="cmpCelNum">'+fmt(l.area,1)+'</td>'+
@@ -1734,43 +1803,49 @@ function renderSimulacao(){
       '<td class="cmpCelNum">'+fmtInt(l.peso)+'</td>'+
       '<td class="cmpCelNum">'+fmt(l.ua,1)+'</td>'+
       '<td class="cmpCelNum">'+(l.uaHaAtual!=null?fmt(l.uaHaAtual,2):'—')+'</td>'+
-      '<td class="cmpCelNum"><input type="text" inputmode="decimal" data-editalvo="'+l.key+'" value="'+l.uaHaAlvo.toFixed(2)+'" style="width:52px;text-align:center;"></td>'+
-      '<td class="cmpCelNum" style="white-space:nowrap;"><input type="number" min="0" data-simtirar="'+l.key+'" value="'+tirar+'" style="width:52px;text-align:right;">'+
-        (sugestaoTirar>0?' <button class="btn-x" data-simtirar-zerar="'+l.key+'" title="não usar sugestão">✕</button>':'')+'</td>'+
-      '<td class="cmpCelNum" style="white-space:nowrap;"><input type="number" min="0" data-simentrar="'+l.key+'" value="'+entrar+'" style="width:52px;text-align:right;">'+
-        (sugestaoEntrar>0?' <button class="btn-x" data-simentrar-zerar="'+l.key+'" title="não usar sugestão">✕</button>':'')+'</td>'+
+      '<td class="cmpCelNum"><input type="text" inputmode="decimal" data-editalvo="'+l.key+'" value="'+l.uaHaAlvo.toFixed(2)+'" class="simInputSmall"></td>'+
+      '<td class="cmpCelNum simCelDupla">'+
+        '<span class="simLinhaDupla"><input type="number" min="0" data-simtirar="'+l.key+'" value="'+tirar+'" class="simInputSmall">'+xTirar+'</span>'+
+        '<span class="simLinhaDupla simLinhaPeso"><input type="number" min="0" data-pesosair="'+l.key+'" value="'+Math.round(pesoSairLinha)+'" class="simInputSmall" title="peso dos animais que vão sair"> kg</span>'+
+      '</td>'+
+      '<td class="cmpCelNum simCelDupla">'+
+        '<span class="simLinhaDupla"><input type="number" min="0" data-simentrar="'+l.key+'" value="'+entrar+'" class="simInputSmall">'+xEntrar+'</span>'+
+        '<span class="simLinhaDupla simLinhaPeso"><input type="number" min="0" data-pesoentrar="'+l.key+'" value="'+Math.round(pesoEntrarLinha)+'" class="simInputSmall" title="peso dos animais que vão entrar"> kg</span>'+
+      '</td>'+
       '<td class="cmpCelNum" style="font-weight:700;">'+fmtInt(simulada)+'</td>'+
+      '<td class="cmpCelNum">'+(simulada>0?fmtInt(pesoMedioSimulado):'—')+'</td>'+
       '<td class="cmpCelNum">'+fmt(uaSimulada,1)+'</td>'+
       '<td class="cmpCelNum">'+diffTxt+'</td>'+
     '</tr>';
   }).join('');
   var diffTotal=totalSimulado-totalAtual;
+  var kgDiffTotal=totalKgSimulado-totalKgAtual;
   var resumo=diffTotal===0?'sem mudança no total':(diffTotal>0?
-    'entrada líquida de <b style="color:#1F5C33;">'+diffTotal+'</b> animais (de '+fmtInt(pesoEntrada)+'kg)':
-    'retirada líquida de <b style="color:#A63D2F;">'+(-diffTotal)+'</b> animais (de '+fmtInt(pesoSaida)+'kg)');
+    'entrada líquida de <b style="color:#1F5C33;">'+diffTotal+'</b> animais':
+    'retirada líquida de <b style="color:#A63D2F;">'+(-diffTotal)+'</b> animais');
 
   box.innerHTML='<div class="paper" style="padding:14px 16px;margin-bottom:12px;font-size:12px;">Comparando com: <b>'+origemTxt+'</b></div>'+
     '<div class="paper" style="padding:14px 20px;margin-bottom:12px;">'+
       '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">'+
-        '<label style="font-size:11px;">Peso de saída pra sugerir (kg)<br><input id="simPesoSaida" type="number" value="'+pesoSaida+'" style="width:90px;"></label>'+
-        '<label style="font-size:11px;">Peso de entrada pra sugerir (kg)<br><input id="simPesoEntrada" type="number" value="'+pesoEntrada+'" style="width:90px;"></label>'+
+        '<label style="font-size:11px;">Peso de saída pra sugerir (kg)<br><input id="simPesoSaida" type="number" value="'+pesoSaidaGlobal+'" style="width:90px;"></label>'+
+        '<label style="font-size:11px;">Peso de entrada pra sugerir (kg)<br><input id="simPesoEntrada" type="number" value="'+pesoEntradaGlobal+'" style="width:90px;"></label>'+
         '<button class="btn-ghost" id="btnRecalcularSugestoes">↻ Recalcular sugestões</button>'+
       '</div>'+
-      '<div style="font-size:11.5px;opacity:.7;margin-top:8px;">"Sair" e "Entrar" já vêm com uma sugestão calculada pra deixar cada linha no alvo — clique no ✕ pra descartar e digitar o número que quiser. O "UA/ha alvo" é editável direto aqui.</div>'+
+      '<div style="font-size:11.5px;opacity:.7;margin-top:8px;">"Sair" e "Entrar" já vêm com uma sugestão calculada pra deixar cada linha no alvo — clique no ✕ pra descartar e digitar o número que quiser. Embaixo de cada um, o peso específico daqueles animais (pode ser diferente da média, se você for escolher os mais pesados ou mais leves). O "UA/ha alvo" é editável direto aqui.</div>'+
     '</div>'+
     '<div class="paper" style="padding:8px 4px;overflow-x:auto;">'+
     '<table class="cmpTable"><thead><tr>'+
-      '<th style="text-align:left;">Piquete</th><th>Ha</th><th>Qtd. atual</th><th>Peso médio atual</th><th>UA atual</th>'+
-      '<th>UA/ha atual</th><th>UA/ha alvo</th><th>Sair</th><th>Entrar</th>'+
-      '<th>Qtd. simulada</th><th>UA simulada</th><th>Diferença</th>'+
+      '<th style="text-align:left;">Piquete</th><th>Ha</th><th>Qtd.<br>atual</th><th>Peso méd.<br>atual</th><th>UA<br>atual</th>'+
+      '<th>UA/ha<br>atual</th><th>UA/ha<br>alvo</th><th>Sair<br><small style="font-weight:400;">(peso)</small></th><th>Entrar<br><small style="font-weight:400;">(peso)</small></th>'+
+      '<th>Qtd.<br>simulada</th><th>Peso méd.<br>simulado</th><th>UA<br>simulada</th><th>Diferença</th>'+
     '</tr></thead><tbody>'+linhasHtml+'</tbody>'+
     '<tfoot><tr style="font-weight:700;border-top:2px solid #244b35;">'+
       '<td class="cmpCelTxt">Total da fazenda</td><td></td><td class="cmpCelNum">'+fmtInt(totalAtual)+'</td><td></td>'+
       '<td class="cmpCelNum">'+fmt(totalUaAtual,1)+'</td><td></td><td></td><td></td><td></td>'+
-      '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td class="cmpCelNum">'+fmt(totalUaSimulado,1)+'</td>'+
+      '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td></td><td class="cmpCelNum">'+fmt(totalUaSimulado,1)+'</td>'+
       '<td class="cmpCelNum">'+(diffTotal>=0?'+':'')+diffTotal+'</td>'+
     '</tr></tfoot></table></div>'+
-    '<div class="paper" style="padding:12px 20px;margin-top:12px;font-size:13px;">Resumo: fazenda tinha <b>'+fmtInt(totalAtual)+'</b> animais, com essa simulação fica com <b>'+fmtInt(totalSimulado)+'</b> — '+resumo+'.</div>';
+    '<div class="paper" style="padding:12px 20px;margin-top:12px;font-size:13px;">Resumo: fazenda tinha <b>'+fmtInt(totalAtual)+'</b> animais ('+fmtInt(totalKgAtual)+' kg), com essa simulação fica com <b>'+fmtInt(totalSimulado)+'</b> ('+fmtInt(totalKgSimulado)+' kg) — '+resumo+' ('+(kgDiffTotal>=0?'+':'')+fmtInt(kgDiffTotal)+' kg no total).</div>';
 }
 
 function renderRelatorio(){
@@ -3205,6 +3280,12 @@ function handleImportPiquete(evt){
       }
       if(!novos.length){ el('importPiqueteMsg').textContent='⚠ nenhuma linha válida encontrada no arquivo.'; return; }
       if(!confirm('Isso vai substituir os '+state.piquetes.length+' piquete(s) atuais pelos '+novos.length+' do arquivo. Os planos confirmados serão apagados. Continuar?')){ el('importPiqueteMsg').textContent='Importação cancelada.'; return; }
+      var infoAntiga={};
+      state.piquetes.forEach(function(p){infoAntiga[normalizarNomeControle(p.name)]={grupo:p.grupo||'',uaHaAlvo:p.uaHaAlvo};});
+      novos.forEach(function(p){
+        var antiga=infoAntiga[normalizarNomeControle(p.name)];
+        if(antiga){ if(antiga.grupo)p.grupo=antiga.grupo; p.uaHaAlvo=antiga.uaHaAlvo; }
+      });
       var novosCount=novos.length;
       state.piquetes=novos;
       state.planos=[];
@@ -3426,9 +3507,7 @@ el('importEstanciaFile').addEventListener('change',function(evt){
 });
 el('btnResetAll').addEventListener('click',function(){
   if(confirm('Trocar de fazenda apaga TODOS os lotes, piquetes e planos salvos neste navegador. Exporte um backup antes, se precisar. Continuar?')){
-    state={fazendaNome:'',uaKg:450,dataEstudo:todayISO(),gmdAjuste:GMD_BASE.slice(),gmdPercent:new Array(12).fill(0),gmdStepPercent:5,
-      capMin:1.2,capMax:2.5,capBase:capacidadeCurveFromMinMax(1.2,2.5),capAjustado:capacidadeCurveFromMinMax(1.2,2.5),capPercent:new Array(12).fill(0),
-      lotes:[],piquetes:[],planos:[],recorridas:[],controlPasto:null,currentPage:'inicio',selectedLoteId:null,testGroup:[],testCab:null,testPeso:null,homeQuarter:false,loteSortKey:null,loteSortDir:1};
+    state=blankState();
     ensureSaidaPiquete();
     saveState(); syncTopInputs(); renderAll(); abrirBoasVindas();
   }
@@ -3655,6 +3734,9 @@ el('piquetesTableBody').addEventListener('change',function(e){
   saveState(); renderPiquetesPage();
 });
 el('btnFormarGrupo').addEventListener('click',formarGrupo);
+el('btnExportarEstrutura').addEventListener('click',exportarEstrutura);
+el('btnImportarEstrutura').addEventListener('click',function(){el('importEstruturaFile').click();});
+el('importEstruturaFile').addEventListener('change',importarEstrutura);
 el('btnAplicarUaHaTodos').addEventListener('click',function(){
   var v=parseFloat(el('uaHaAlvoPadrao').value.replace(',','.'));
   if(isNaN(v)||v<=0){ alert('Informe um UA/ha alvo válido.'); return; }
@@ -3919,8 +4001,11 @@ el('btnMarcarSnapshotAntes').addEventListener('click',marcarSnapshotAntes);
 el('btnImportarRecorridaAqui').addEventListener('click',function(){el('importRecorridaFile').click();});
 el('simulacaoBox').addEventListener('change',function(e){
   var idTirar=e.target.getAttribute('data-simtirar'), idEntrar=e.target.getAttribute('data-simentrar'), idAlvo=e.target.getAttribute('data-editalvo');
+  var idPesoSair=e.target.getAttribute('data-pesosair'), idPesoEntrar=e.target.getAttribute('data-pesoentrar');
   if(idTirar){ if(!state.simTirar)state.simTirar={}; state.simTirar[idTirar]=Math.max(0,parseInt(e.target.value,10)||0); saveState(); renderSimulacao(); }
   if(idEntrar){ if(!state.simEntrar)state.simEntrar={}; state.simEntrar[idEntrar]=Math.max(0,parseInt(e.target.value,10)||0); saveState(); renderSimulacao(); }
+  if(idPesoSair){ if(!state.simPesoSaidaLinha)state.simPesoSaidaLinha={}; state.simPesoSaidaLinha[idPesoSair]=Math.max(0,parseFloat(e.target.value.replace(',','.'))||0); saveState(); renderSimulacao(); }
+  if(idPesoEntrar){ if(!state.simPesoEntradaLinha)state.simPesoEntradaLinha={}; state.simPesoEntradaLinha[idPesoEntrar]=Math.max(0,parseFloat(e.target.value.replace(',','.'))||0); saveState(); renderSimulacao(); }
   if(idAlvo){
     var novoAlvo=parseFloat(e.target.value.replace(',','.'))||0;
     var usaCP2=!!cpData();
@@ -3935,7 +4020,7 @@ el('simulacaoBox').addEventListener('click',function(e){
   var idZerarTirar=e.target.getAttribute('data-simtirar-zerar'), idZerarEntrar=e.target.getAttribute('data-simentrar-zerar');
   if(idZerarTirar){ if(!state.simTirar)state.simTirar={}; state.simTirar[idZerarTirar]=0; saveState(); renderSimulacao(); }
   if(idZerarEntrar){ if(!state.simEntrar)state.simEntrar={}; state.simEntrar[idZerarEntrar]=0; saveState(); renderSimulacao(); }
-  if(e.target.id==='btnRecalcularSugestoes'){ state.simTirar={}; state.simEntrar={}; saveState(); renderSimulacao(); }
+  if(e.target.id==='btnRecalcularSugestoes'){ state.simTirar={}; state.simEntrar={}; state.simPesoSaidaLinha={}; state.simPesoEntradaLinha={}; saveState(); renderSimulacao(); }
 });
 el('btnRegistrarEntrada').addEventListener('click',registrarEntrada);
 el('importMovimentacoesFile').addEventListener('change',importarMovimentacoes);
