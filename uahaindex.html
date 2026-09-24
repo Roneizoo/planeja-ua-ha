@@ -398,17 +398,17 @@ body{min-height:100vh;}
 }
 
 .cmpTable{width:100%;border-collapse:collapse;font-size:12.5px;}
-.cmpTable th{padding:7px 8px;text-align:center;background:#F1EEE0;border-bottom:2px solid #244b35;font-size:11.5px;}
-.cmpTable td{padding:6px 8px;border-bottom:1px solid #E5E0CC;vertical-align:middle;}
-.cmpCelNum{text-align:center;font-variant-numeric:tabular-nums;}
-.cmpCelTxt{text-align:left;}
-.cmpTable th:first-child,.cmpTable td:first-child{width:110px;max-width:110px;}
-.btn-x-placeholder{display:inline-block;width:24px;}
-.simInputSmall{width:48px;text-align:right;}
-.simCelDupla{white-space:nowrap;}
-.simLinhaDupla{display:flex;align-items:center;justify-content:center;gap:3px;}
-.simLinhaPeso{font-size:10px;opacity:.6;margin-top:3px;}
-.simLinhaPeso input{width:40px;}
+.cmpTable th{padding:6px 8px;text-align:center;background:#EDE9D8;border:1px solid #C9C2A6;font-size:11px;font-weight:700;white-space:nowrap;}
+.cmpTable td{padding:0;border:1px solid #DCD6BE;vertical-align:middle;height:30px;}
+.cmpCelNum{text-align:right;font-variant-numeric:tabular-nums;padding:0 8px;}
+.cmpCelTxt{text-align:left;padding:0 8px;}
+.cmpTable th:first-child,.cmpTable td:first-child{width:100px;max-width:100px;}
+.cmpTable tbody tr:nth-child(even){background:#FAF8F0;}
+.cmpTable tbody tr:hover{background:#F1EEDD;}
+.cmpTable input{width:100%;height:30px;border:none;background:transparent;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;padding:0 8px;box-sizing:border-box;}
+.cmpTable input:focus{outline:2px solid #8a5a2b;outline-offset:-2px;background:#FFFDF5;}
+.cmpTable input[data-editalvo]{text-align:center;}
+.cmpTable tfoot td{padding:0 8px;height:32px;}
 .distSecaoTitulo{font-size:10.5px;opacity:.6;margin:8px 0 6px;width:100%;font-weight:700;letter-spacing:.03em;}
 #piquetesTableBody tr{cursor:pointer;}
 #piquetesTableBody tr:hover{background:#F7F3E8;}
@@ -1776,7 +1776,7 @@ function renderSimulacao(){
     var sugestaoEntrar=vagaUA>0.01?Math.floor(vagaUA*uaKg/pesoEntradaGlobal):0;
     if(!(l.key in state.simTirar))state.simTirar[l.key]=sugestaoTirar;
     if(!(l.key in state.simEntrar))state.simEntrar[l.key]=sugestaoEntrar;
-    if(!(l.key in state.simPesoSaidaLinha))state.simPesoSaidaLinha[l.key]=l.peso||pesoSaidaGlobal;
+    if(!(l.key in state.simPesoSaidaLinha))state.simPesoSaidaLinha[l.key]=Math.round(l.peso||pesoSaidaGlobal);
     if(!(l.key in state.simPesoEntradaLinha))state.simPesoEntradaLinha[l.key]=pesoEntradaGlobal;
     var tirar=state.simTirar[l.key]||0, entrar=state.simEntrar[l.key]||0;
     var pesoSairLinha=state.simPesoSaidaLinha[l.key]||l.peso||pesoSaidaGlobal;
@@ -1793,9 +1793,7 @@ function renderSimulacao(){
     var diff=simulada-l.cab;
     totalAtual+=l.cab;totalSimulado+=simulada;totalUaAtual+=l.ua;totalUaSimulado+=uaSimulada;
     totalKgAtual+=kgAtualLinha;totalKgSimulado+=kgSimulado;
-    var diffTxt=diff===0?'—':(diff>0?'<span style="color:#1F5C33;font-weight:700;">(+'+diff+')</span>':'<span style="color:#A63D2F;font-weight:700;">('+diff+')</span>');
-    var xTirar=sugestaoTirar>0?'<button class="btn-x" data-simtirar-zerar="'+l.key+'" title="não usar sugestão">✕</button>':'<span class="btn-x-placeholder"></span>';
-    var xEntrar=sugestaoEntrar>0?'<button class="btn-x" data-simentrar-zerar="'+l.key+'" title="não usar sugestão">✕</button>':'<span class="btn-x-placeholder"></span>';
+    var diffTxt=diff===0?'—':(diff>0?'<span style="color:#1F5C33;font-weight:700;">+'+diff+'</span>':'<span style="color:#A63D2F;font-weight:700;">'+diff+'</span>');
     return '<tr>'+
       '<td class="cmpCelTxt">'+l.nome+(l.piquetes.length>1?' <span style="opacity:.55;font-size:10.5px;">('+l.piquetes.length+')</span>':'')+'</td>'+
       '<td class="cmpCelNum">'+fmt(l.area,1)+'</td>'+
@@ -1803,15 +1801,11 @@ function renderSimulacao(){
       '<td class="cmpCelNum">'+fmtInt(l.peso)+'</td>'+
       '<td class="cmpCelNum">'+fmt(l.ua,1)+'</td>'+
       '<td class="cmpCelNum">'+(l.uaHaAtual!=null?fmt(l.uaHaAtual,2):'—')+'</td>'+
-      '<td class="cmpCelNum"><input type="text" inputmode="decimal" data-editalvo="'+l.key+'" value="'+l.uaHaAlvo.toFixed(2)+'" class="simInputSmall"></td>'+
-      '<td class="cmpCelNum simCelDupla">'+
-        '<span class="simLinhaDupla"><input type="number" min="0" data-simtirar="'+l.key+'" value="'+tirar+'" class="simInputSmall">'+xTirar+'</span>'+
-        '<span class="simLinhaDupla simLinhaPeso"><input type="number" min="0" data-pesosair="'+l.key+'" value="'+Math.round(pesoSairLinha)+'" class="simInputSmall" title="peso dos animais que vão sair"> kg</span>'+
-      '</td>'+
-      '<td class="cmpCelNum simCelDupla">'+
-        '<span class="simLinhaDupla"><input type="number" min="0" data-simentrar="'+l.key+'" value="'+entrar+'" class="simInputSmall">'+xEntrar+'</span>'+
-        '<span class="simLinhaDupla simLinhaPeso"><input type="number" min="0" data-pesoentrar="'+l.key+'" value="'+Math.round(pesoEntrarLinha)+'" class="simInputSmall" title="peso dos animais que vão entrar"> kg</span>'+
-      '</td>'+
+      '<td class="cmpCelNum"><input type="text" inputmode="decimal" data-editalvo="'+l.key+'" value="'+l.uaHaAlvo.toFixed(2)+'"></td>'+
+      '<td class="cmpCelNum"><input type="number" min="0" data-simtirar="'+l.key+'" value="'+tirar+'" title="sugestão: '+sugestaoTirar+'"></td>'+
+      '<td class="cmpCelNum"><input type="number" min="0" data-pesosair="'+l.key+'" value="'+Math.round(pesoSairLinha)+'"></td>'+
+      '<td class="cmpCelNum"><input type="number" min="0" data-simentrar="'+l.key+'" value="'+entrar+'" title="sugestão: '+sugestaoEntrar+'"></td>'+
+      '<td class="cmpCelNum"><input type="number" min="0" data-pesoentrar="'+l.key+'" value="'+Math.round(pesoEntrarLinha)+'"></td>'+
       '<td class="cmpCelNum" style="font-weight:700;">'+fmtInt(simulada)+'</td>'+
       '<td class="cmpCelNum">'+(simulada>0?fmtInt(pesoMedioSimulado):'—')+'</td>'+
       '<td class="cmpCelNum">'+fmt(uaSimulada,1)+'</td>'+
@@ -1831,22 +1825,23 @@ function renderSimulacao(){
         '<label style="font-size:11px;">Peso de entrada pra sugerir (kg)<br><input id="simPesoEntrada" type="number" value="'+pesoEntradaGlobal+'" style="width:90px;"></label>'+
         '<button class="btn-ghost" id="btnRecalcularSugestoes">↻ Recalcular sugestões</button>'+
       '</div>'+
-      '<div style="font-size:11.5px;opacity:.7;margin-top:8px;">"Sair" e "Entrar" já vêm com uma sugestão calculada pra deixar cada linha no alvo — clique no ✕ pra descartar e digitar o número que quiser. Embaixo de cada um, o peso específico daqueles animais (pode ser diferente da média, se você for escolher os mais pesados ou mais leves). O "UA/ha alvo" é editável direto aqui.</div>'+
+      '<div style="font-size:11.5px;opacity:.7;margin-top:8px;">"Sair" e "Entrar" já vêm com a quantidade sugerida pra deixar cada linha no alvo (passe o mouse pra ver a sugestão de novo) — edite direto se quiser outro número. As colunas de peso ao lado são o peso específico dos animais que saem/entram, editável linha a linha. O "UA/ha alvo" também é editável direto na tabela.</div>'+
     '</div>'+
     '<div class="paper" style="padding:8px 4px;overflow-x:auto;">'+
     '<table class="cmpTable"><thead><tr>'+
       '<th style="text-align:left;">Piquete</th><th>Ha</th><th>Qtd.<br>atual</th><th>Peso méd.<br>atual</th><th>UA<br>atual</th>'+
-      '<th>UA/ha<br>atual</th><th>UA/ha<br>alvo</th><th>Sair<br><small style="font-weight:400;">(peso)</small></th><th>Entrar<br><small style="font-weight:400;">(peso)</small></th>'+
+      '<th>UA/ha<br>atual</th><th>UA/ha<br>alvo</th><th>Sair</th><th>Peso<br>saída</th><th>Entrar</th><th>Peso<br>entrada</th>'+
       '<th>Qtd.<br>simulada</th><th>Peso méd.<br>simulado</th><th>UA<br>simulada</th><th>Diferença</th>'+
     '</tr></thead><tbody>'+linhasHtml+'</tbody>'+
-    '<tfoot><tr style="font-weight:700;border-top:2px solid #244b35;">'+
+    '<tfoot><tr style="font-weight:700;background:#F1EEDD;">'+
       '<td class="cmpCelTxt">Total da fazenda</td><td></td><td class="cmpCelNum">'+fmtInt(totalAtual)+'</td><td></td>'+
-      '<td class="cmpCelNum">'+fmt(totalUaAtual,1)+'</td><td></td><td></td><td></td><td></td>'+
+      '<td class="cmpCelNum">'+fmt(totalUaAtual,1)+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'+
       '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td></td><td class="cmpCelNum">'+fmt(totalUaSimulado,1)+'</td>'+
       '<td class="cmpCelNum">'+(diffTotal>=0?'+':'')+diffTotal+'</td>'+
     '</tr></tfoot></table></div>'+
     '<div class="paper" style="padding:12px 20px;margin-top:12px;font-size:13px;">Resumo: fazenda tinha <b>'+fmtInt(totalAtual)+'</b> animais ('+fmtInt(totalKgAtual)+' kg), com essa simulação fica com <b>'+fmtInt(totalSimulado)+'</b> ('+fmtInt(totalKgSimulado)+' kg) — '+resumo+' ('+(kgDiffTotal>=0?'+':'')+fmtInt(kgDiffTotal)+' kg no total).</div>';
 }
+
 
 function renderRelatorio(){
   var box=el('relatorioProducaoBox');
@@ -4017,9 +4012,6 @@ el('simulacaoBox').addEventListener('change',function(e){
   if(e.target.id==='simPesoSaida'||e.target.id==='simPesoEntrada'){ saveState(); }
 });
 el('simulacaoBox').addEventListener('click',function(e){
-  var idZerarTirar=e.target.getAttribute('data-simtirar-zerar'), idZerarEntrar=e.target.getAttribute('data-simentrar-zerar');
-  if(idZerarTirar){ if(!state.simTirar)state.simTirar={}; state.simTirar[idZerarTirar]=0; saveState(); renderSimulacao(); }
-  if(idZerarEntrar){ if(!state.simEntrar)state.simEntrar={}; state.simEntrar[idZerarEntrar]=0; saveState(); renderSimulacao(); }
   if(e.target.id==='btnRecalcularSugestoes'){ state.simTirar={}; state.simEntrar={}; state.simPesoSaidaLinha={}; state.simPesoEntradaLinha={}; saveState(); renderSimulacao(); }
 });
 el('btnRegistrarEntrada').addEventListener('click',registrarEntrada);
