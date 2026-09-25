@@ -1590,7 +1590,7 @@ function blankState(){
     currentPage:'inicio',selectedLoteId:null,testGroup:[],testCab:null,testPeso:null,testDataVenda:null,editingPlanId:null,
     homeQuarter:false,loteSortKey:null,loteSortDir:1,
     snapshotAntes:null,estoqueInicial:null,entradas:[],movimentosAplicados:[],
-    simTirar:{},simEntrar:{},simPesoSaidaLinha:{},simPesoEntradaLinha:{},piquetesParaAgrupar:[]};
+    simTirar:{},simEntrar:{},simPesoSaidaLinha:{},simPesoEntradaLinha:{},simTirarManual:{},simEntrarManual:{},piquetesParaAgrupar:[]};
 }
 function exportarEstrutura(){
   var dados=state.piquetes.filter(function(p){return !p.saida;}).map(function(p){
@@ -1747,6 +1747,18 @@ function linhasSimulacao(antes){
     var cap=area*uaHaAlvo;
     return {key:linha.key,nome:linha.nome,piquetes:linha.piquetes,area:area,cab:cab,peso:peso,ua:ua,uaHaAtual:uaHaAtual,uaHaAlvo:uaHaAlvo,cap:cap};
   });
+}
+function calcularSugestaoTirar(l,pesoSaida){
+  var vagaUA=l.cap-l.ua;
+  return vagaUA<-0.01?Math.ceil((-vagaUA)*(state.uaKg||450)/pesoSaida):0;
+}
+function calcularSugestaoEntrar(l,pesoEntrada){
+  var vagaUA=l.cap-l.ua;
+  return vagaUA>0.01?Math.floor(vagaUA*(state.uaKg||450)/pesoEntrada):0;
+}
+function antesAtualSimulacao(){
+  var usaCP=!!cpData();
+  return usaCP?estadoAntesControlPasto():(state.snapshotAntes?state.snapshotAntes.estado:null);
 }
 function renderSimulacao(){
   var box=el('simulacaoBox');
@@ -3997,14 +4009,39 @@ el('btnImportarRecorridaAqui').addEventListener('click',function(){el('importRec
 el('simulacaoBox').addEventListener('change',function(e){
   var idTirar=e.target.getAttribute('data-simtirar'), idEntrar=e.target.getAttribute('data-simentrar'), idAlvo=e.target.getAttribute('data-editalvo');
   var idPesoSair=e.target.getAttribute('data-pesosair'), idPesoEntrar=e.target.getAttribute('data-pesoentrar');
-  if(idTirar){ if(!state.simTirar)state.simTirar={}; state.simTirar[idTirar]=Math.max(0,parseInt(e.target.value,10)||0); saveState(); renderSimulacao(); }
-  if(idEntrar){ if(!state.simEntrar)state.simEntrar={}; state.simEntrar[idEntrar]=Math.max(0,parseInt(e.target.value,10)||0); saveState(); renderSimulacao(); }
-  if(idPesoSair){ if(!state.simPesoSaidaLinha)state.simPesoSaidaLinha={}; state.simPesoSaidaLinha[idPesoSair]=Math.max(0,parseFloat(e.target.value.replace(',','.'))||0); saveState(); renderSimulacao(); }
-  if(idPesoEntrar){ if(!state.simPesoEntradaLinha)state.simPesoEntradaLinha={}; state.simPesoEntradaLinha[idPesoEntrar]=Math.max(0,parseFloat(e.target.value.replace(',','.'))||0); saveState(); renderSimulacao(); }
+  if(idTirar){
+    if(!state.simTirar)state.simTirar={}; if(!state.simTirarManual)state.simTirarManual={};
+    state.simTirar[idTirar]=Math.max(0,parseInt(e.target.value,10)||0);
+    state.simTirarManual[idTirar]=true;
+    saveState(); renderSimulacao();
+  }
+  if(idEntrar){
+    if(!state.simEntrar)state.simEntrar={}; if(!state.simEntrarManual)state.simEntrarManual={};
+    state.simEntrar[idEntrar]=Math.max(0,parseInt(e.target.value,10)||0);
+    state.simEntrarManual[idEntrar]=true;
+    saveState(); renderSimulacao();
+  }
+  if(idPesoSair){
+    if(!state.simPesoSaidaLinha)state.simPesoSaidaLinha={};
+    state.simPesoSaidaLinha[idPesoSair]=Math.max(0,parseFloat(e.target.value.replace(',','.'))||0);
+    if(!(state.simTirarManual&&state.simTirarManual[idPesoSair])){
+      var linhaPS=linhasSimulacao(antesAtualSimulacao()).find(function(l){return l.key===idPesoSair;});
+      if(linhaPS)state.simTirar[idPesoSair]=calcularSugestaoTirar(linhaPS,state.simPesoSaidaLinha[idPesoSair]);
+    }
+    saveState(); renderSimulacao();
+  }
+  if(idPesoEntrar){
+    if(!state.simPesoEntradaLinha)state.simPesoEntradaLinha={};
+    state.simPesoEntradaLinha[idPesoEntrar]=Math.max(0,parseFloat(e.target.value.replace(',','.'))||0);
+    if(!(state.simEntrarManual&&state.simEntrarManual[idPesoEntrar])){
+      var linhaPE=linhasSimulacao(antesAtualSimulacao()).find(function(l){return l.key===idPesoEntrar;});
+      if(linhaPE)state.simEntrar[idPesoEntrar]=calcularSugestaoEntrar(linhaPE,state.simPesoEntradaLinha[idPesoEntrar]);
+    }
+    saveState(); renderSimulacao();
+  }
   if(idAlvo){
     var novoAlvo=parseFloat(e.target.value.replace(',','.'))||0;
-    var usaCP2=!!cpData();
-    var antes2=usaCP2?estadoAntesControlPasto():(state.snapshotAntes?state.snapshotAntes.estado:null);
+    var antes2=antesAtualSimulacao();
     var linha=linhasSimulacao(antes2).find(function(l){return l.key===idAlvo;});
     if(linha)linha.piquetes.forEach(function(p){p.uaHaAlvo=novoAlvo;});
     saveState(); renderSimulacao();
@@ -4012,7 +4049,22 @@ el('simulacaoBox').addEventListener('change',function(e){
   if(e.target.id==='simPesoSaida'||e.target.id==='simPesoEntrada'){ saveState(); }
 });
 el('simulacaoBox').addEventListener('click',function(e){
-  if(e.target.id==='btnRecalcularSugestoes'){ state.simTirar={}; state.simEntrar={}; state.simPesoSaidaLinha={}; state.simPesoEntradaLinha={}; saveState(); renderSimulacao(); }
+  if(e.target.id==='btnRecalcularSugestoes'){
+    var antes3=antesAtualSimulacao();
+    var pesoSaidaG=cpNum(el('simPesoSaida')&&el('simPesoSaida').value)||380;
+    var pesoEntradaG=cpNum(el('simPesoEntrada')&&el('simPesoEntrada').value)||200;
+    linhasSimulacao(antes3).forEach(function(l){
+      if(!(state.simTirarManual&&state.simTirarManual[l.key])){
+        state.simPesoSaidaLinha[l.key]=Math.round(l.peso||pesoSaidaG);
+        state.simTirar[l.key]=calcularSugestaoTirar(l,state.simPesoSaidaLinha[l.key]);
+      }
+      if(!(state.simEntrarManual&&state.simEntrarManual[l.key])){
+        state.simPesoEntradaLinha[l.key]=pesoEntradaG;
+        state.simEntrar[l.key]=calcularSugestaoEntrar(l,pesoEntradaG);
+      }
+    });
+    saveState(); renderSimulacao();
+  }
 });
 el('btnRegistrarEntrada').addEventListener('click',registrarEntrada);
 el('importMovimentacoesFile').addEventListener('change',importarMovimentacoes);
