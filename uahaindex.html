@@ -3322,7 +3322,9 @@ function handleImportPiquete(evt){
       state.planos=[];
       state.testGroup=[];
       ensureSaidaPiquete();
-      el('importPiqueteMsg').textContent='✅ '+novosCount+' piquete(s) importado(s) — substituiu os anteriores'+(duplicados.length?' · '+duplicados.length+' nome(s) repetido(s) renomeado(s): '+duplicados.slice(0,4).join('; ')+(duplicados.length>4?'…':''):'');
+      var qtdAgrupadosRetro=0;
+      if(cpData()){ qtdAgrupadosRetro=aplicarGruposAutomaticosControlPasto(state.controlPasto.rows); }
+      el('importPiqueteMsg').textContent='✅ '+novosCount+' piquete(s) importado(s) — substituiu os anteriores'+(duplicados.length?' · '+duplicados.length+' nome(s) repetido(s) renomeado(s): '+duplicados.slice(0,4).join('; ')+(duplicados.length>4?'…':''):'')+(qtdAgrupadosRetro?' · '+qtdAgrupadosRetro+' piquete(s) agrupado(s) automaticamente pelo Control Pasto já importado.':'');
       saveState(); renderAll();
     }catch(ex){ el('importPiqueteMsg').textContent='⚠ erro: '+ex.message; }
   };
@@ -3761,9 +3763,8 @@ el('btnAddPiquete2').addEventListener('click',function(){
 el('piquetesTableBody').addEventListener('change',function(e){
   var t=e.target;
   var idA=t.getAttribute('data-area'), idAlvo=t.getAttribute('data-uaalvo');
-  if(idA){ var p=piqueteById(idA); var raw=t.value.replace(',','.'); var v=parseFloat(raw); p.area=(t.value===''?null:(isNaN(v)?null:v)); }
-  if(idAlvo){ var p2=piqueteById(idAlvo); p2.uaHaAlvo=parseFloat(t.value.replace(',','.'))||0; }
-  saveState(); renderPiquetesPage();
+  if(idA){ var p=piqueteById(idA); var raw=t.value.replace(',','.'); var v=parseFloat(raw); p.area=(t.value===''?null:(isNaN(v)?null:v)); saveState(); renderPiquetesPage(); }
+  if(idAlvo){ var p2=piqueteById(idAlvo); p2.uaHaAlvo=parseFloat(t.value.replace(',','.'))||0; saveState(); renderPiquetesPage(); }
 });
 el('btnFormarGrupo').addEventListener('click',formarGrupo);
 el('btnExportarEstrutura').addEventListener('click',exportarEstrutura);
