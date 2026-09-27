@@ -2907,7 +2907,28 @@ function cpImportRows(rows,fileName){
   }
   if(!physical.length)throw new Error('Nenhum piquete físico válido foi encontrado.');
   state.controlPasto={fileName:fileName,importedAt:new Date().toISOString(),alvoPadrao:state.controlPasto&&state.controlPasto.alvoPadrao||1.2,rows:physical};
+  state.__ultimoAgrupamentoCp=aplicarGruposAutomaticosControlPasto(physical);
   saveState();renderControlPasto();
+}
+function aplicarGruposAutomaticosControlPasto(physical){
+  var porParent={};
+  physical.forEach(function(r){
+    if(!r.parentId)return;
+    if(!porParent[r.parentId])porParent[r.parentId]=[];
+    porParent[r.parentId].push(r);
+  });
+  var aplicados=0;
+  Object.keys(porParent).forEach(function(pid){
+    var rs=porParent[pid];
+    if(rs.length<2)return;
+    var label=prefixoComum(rs.map(function(r){return r.nome;}));
+    if(!label)return;
+    rs.forEach(function(r){
+      var match=state.piquetes.find(function(p){return !p.saida&&normalizarNomeControle(p.name)===normalizarNomeControle(r.nome);});
+      if(match&&!match.grupo){match.grupo=label;aplicados++;}
+    });
+  });
+  return aplicados;
 }
 function cpData(){
   return state.controlPasto && Array.isArray(state.controlPasto.rows) ? state.controlPasto : null;
@@ -3661,8 +3682,9 @@ el('controlPastoFile').addEventListener('change',function(evt){
     try{
       var rows=controlPastoRowsFromImport(file,e.target.result);if(!rows)return;
       cpImportRows(rows,file.name);
+      var qtdAgrupados=state.__ultimoAgrupamentoCp||0;
       el('controlPastoImportMsg').style.color='#397049';
-      el('controlPastoImportMsg').textContent='✅ '+state.controlPasto.rows.length+' linha(s) importada(s) do Control Pasto. A fotografia ficou separada do planejamento.';
+      el('controlPastoImportMsg').textContent='✅ '+state.controlPasto.rows.length+' linha(s) importada(s) do Control Pasto. A fotografia ficou separada do planejamento.'+(qtdAgrupados?' '+qtdAgrupados+' piquete(s) agrupado(s) automaticamente (aba Piquetes).':'');
     }catch(ex){
       if(el('controlPastoImportMsg')){el('controlPastoImportMsg').style.color='#A63D2F';el('controlPastoImportMsg').textContent='⚠ '+ex.message;}
       else alert('Não foi possível importar: '+ex.message);
