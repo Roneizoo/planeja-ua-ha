@@ -1422,7 +1422,7 @@ var state={
 
 function el(id){return document.getElementById(id);}
 function fmt(v,d){if(v==null||isNaN(v))return '—';return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d==null?1:d,maximumFractionDigits:d==null?1:d});}
-function fmtInt(v){return Number(v).toLocaleString('pt-BR');}
+function fmtInt(v){return Math.round(Number(v)).toLocaleString('pt-BR');}
 function sortKeyName(name){
   var m=name.match(/^(\d+)(.*)$/);
   if(m) return [0,parseInt(m[1],10),m[2]];
@@ -1811,10 +1811,10 @@ function renderSimulacao(){
     var diffTxt=diff===0?'—':(diff>0?'<span style="color:#1F5C33;font-weight:700;">+'+diff+'</span>':'<span style="color:#A63D2F;font-weight:700;">'+diff+'</span>');
     return '<tr>'+
       '<td class="cmpCelTxt">'+l.nome+(l.piquetes.length>1?' <span style="opacity:.55;font-size:10.5px;">('+l.piquetes.length+')</span>':'')+'</td>'+
-      '<td class="cmpCelNum">'+fmt(l.area,1)+'</td>'+
+      '<td class="cmpCelNum">'+fmt(l.area,2)+'</td>'+
       '<td class="cmpCelNum">'+fmtInt(l.cab)+'</td>'+
       '<td class="cmpCelNum">'+fmtInt(l.peso)+'</td>'+
-      '<td class="cmpCelNum">'+fmt(l.ua,1)+'</td>'+
+      '<td class="cmpCelNum">'+fmt(l.ua,2)+'</td>'+
       '<td class="cmpCelNum">'+(l.uaHaAtual!=null?fmt(l.uaHaAtual,2):'—')+'</td>'+
       '<td class="cmpCelNum"><input type="text" inputmode="decimal" data-editalvo="'+l.key+'" value="'+l.uaHaAlvo.toFixed(2)+'"></td>'+
       '<td class="cmpCelNum"><input type="number" min="0" data-simtirar="'+l.key+'" value="'+tirar+'" title="sugestão: '+sugestaoTirar+'"></td>'+
@@ -1823,7 +1823,7 @@ function renderSimulacao(){
       '<td class="cmpCelNum"><input type="number" min="0" data-pesoentrar="'+l.key+'" value="'+Math.round(pesoEntrarLinha)+'"></td>'+
       '<td class="cmpCelNum" style="font-weight:700;">'+fmtInt(simulada)+'</td>'+
       '<td class="cmpCelNum">'+(simulada>0?fmtInt(pesoMedioSimulado):'—')+'</td>'+
-      '<td class="cmpCelNum">'+fmt(uaSimulada,1)+'</td>'+
+      '<td class="cmpCelNum">'+fmt(uaSimulada,2)+'</td>'+
       '<td class="cmpCelNum">'+diffTxt+'</td>'+
     '</tr>';
   }).join('');
@@ -1850,8 +1850,8 @@ function renderSimulacao(){
     '</tr></thead><tbody>'+linhasHtml+'</tbody>'+
     '<tfoot><tr style="font-weight:700;background:#F1EEDD;">'+
       '<td class="cmpCelTxt">Total da fazenda</td><td></td><td class="cmpCelNum">'+fmtInt(totalAtual)+'</td><td></td>'+
-      '<td class="cmpCelNum">'+fmt(totalUaAtual,1)+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'+
-      '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td></td><td class="cmpCelNum">'+fmt(totalUaSimulado,1)+'</td>'+
+      '<td class="cmpCelNum">'+fmt(totalUaAtual,2)+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'+
+      '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td></td><td class="cmpCelNum">'+fmt(totalUaSimulado,2)+'</td>'+
       '<td class="cmpCelNum">'+(diffTotal>=0?'+':'')+diffTotal+'</td>'+
     '</tr></tfoot></table></div>'+
     '<div class="paper" style="padding:12px 20px;margin-top:12px;font-size:13px;">Resumo: fazenda tinha <b>'+fmtInt(totalAtual)+'</b> animais ('+fmtInt(totalKgAtual)+' kg), com essa simulação fica com <b>'+fmtInt(totalSimulado)+'</b> ('+fmtInt(totalKgSimulado)+' kg) — '+resumo+' ('+(kgDiffTotal>=0?'+':'')+fmtInt(kgDiffTotal)+' kg no total).</div>';
@@ -1891,7 +1891,7 @@ function renderRelatorio(){
       '<div class="kpi"><div class="l">Saídas no período</div><div class="v mono">'+fmt(saidasKg,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Estoque atual</div><div class="v mono">'+fmt(estoqueAtual,0)+' kg</div></div>'+
       '<div class="kpi"><div class="l">Produção real no período</div><div class="v mono" style="color:#1F5C33;font-weight:900;">'+fmt(producao,0)+' kg</div></div>'+
-      '<div class="kpi"><div class="l">Produção real por hectare</div><div class="v mono" style="color:#1F5C39;font-weight:900;">'+(producaoPorHa!=null?fmt(producaoPorHa,1)+' kg/ha':'—')+'</div></div>'+
+      '<div class="kpi"><div class="l">Produção real por hectare</div><div class="v mono" style="color:#1F5C39;font-weight:900;">'+(producaoPorHa!=null?fmt(producaoPorHa,2)+' kg/ha':'—')+'</div></div>'+
     '</div>'+
     '<div style="font-size:11px;opacity:.65;margin-top:8px;">'+(pertoDoAno?'Período com '+dias+' dias — já dá pra tratar como um fechamento anual.':'Isso é o resultado real dos '+dias+' dia(s) já passados — não é esticado pra virar "por ano". Só vira um número de ano de verdade quando o período chegar perto de 365 dias, com o gado repesado de novo.')+'</div>'+
     (entradas.length?'<div style="margin-top:14px;font-size:12px;"><b>Entradas registradas:</b><ul style="margin:6px 0 0;padding-left:18px;">'+entradas.map(function(e){return '<li>'+e.data+' — '+e.nome+': '+fmtInt(e.cab)+' cab × '+fmt(e.peso,1)+' kg = '+fmt(e.kg,0)+' kg</li>';}).join('')+'</ul></div>':'')+
@@ -2087,9 +2087,9 @@ function barrilHTML(usedUA,capUA,suppressMsg){
   var color = pct>1 ? '#A63D2F' : (pct>=0.85 ? '#C99A3B' : '#4C7A57');
   var width = Math.min(pct,1)*100;
   var html='<div class="bar-outer"><div class="bar-inner" style="width:'+width+'%;background:'+color+';"></div>'+
-    '<div class="mono" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:'+(pct>0.45?'#F7F3E8':'#2B2A22')+';">'+fmt(usedUA,1)+' / '+fmt(capUA,1)+' UA · '+pctShow+'%</div></div>';
+    '<div class="mono" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:'+(pct>0.45?'#F7F3E8':'#2B2A22')+';">'+fmt(usedUA,2)+' / '+fmt(capUA,2)+' UA · '+pctShow+'%</div></div>';
   if(pct>1 && !suppressMsg){
-    html+='<div class="mono" style="font-size:10.5px;color:#A63D2F;margin-top:3px;">excedeu a capacidade em '+fmt(usedUA-capUA,1)+' UA — marque outro piquete pra sobra</div>';
+    html+='<div class="mono" style="font-size:10.5px;color:#A63D2F;margin-top:3px;">excedeu a capacidade em '+fmt(usedUA-capUA,2)+' UA — marque outro piquete pra sobra</div>';
   }
   return html;
 }
@@ -2107,7 +2107,7 @@ function renderInicio(){
   var kpis=[
     {l:'Área total (piquetes c/ área)',v:fmt(totalArea,2)+' ha'},
     {l:'Total de cabeças',v:fmtInt(totalCab)},
-    {l:'UA total do rebanho',v:fmt(totalUA,1)},
+    {l:'UA total do rebanho',v:fmt(totalUA,2)},
     {l:'UA/ha atual da fazenda',v:uaHaAtual!=null?fmt(uaHaAtual,2):'—'}
   ];
   el('inicioKpis').innerHTML=kpis.map(function(k){
@@ -2222,8 +2222,8 @@ function renderLotes(){
     return '<tr'+(l.ativo===false?' style="opacity:.6;"':'')+'>'+
       '<td>'+l.lote+inativoTag+'</td><td><span class="tag">'+l.categoria+'</span></td>'+
       '<td style="text-align:right" class="mono">'+fmtInt(l.anm)+'</td>'+
-      '<td style="text-align:right" class="mono">'+fmt(l.pv,1)+'</td>'+
-      '<td style="text-align:right" class="mono">'+fmt(loteUA(l),1)+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmtInt(l.pv)+'</td>'+
+      '<td style="text-align:right" class="mono">'+fmt(loteUA(l),2)+'</td>'+
       '<td style="text-align:center"><input type="checkbox" data-toggle-ativo="'+l.id+'" '+(l.ativo!==false?'checked':'')+'></td>'+
       '<td style="white-space:nowrap;"><button class="btn-ghost" data-dividir-lote="'+l.id+'" title="dividir em dois lotes" style="font-size:11px;padding:3px 8px;margin-right:4px;">Dividir</button><button class="btn-x" data-del-lote="'+l.id+'" title="excluir permanentemente">×</button></td>'+
     '</tr>';
@@ -2235,7 +2235,7 @@ function renderLotes(){
   el('lotesTableFoot').innerHTML='<tr style="border-top:2px solid #2B2A22;font-weight:600;">'+
     '<td>Total (mostrado)</td><td></td>'+
     '<td style="text-align:right" class="mono">'+fmtInt(totalCabFiltrado)+'</td><td></td>'+
-    '<td style="text-align:right" class="mono">'+fmt(totalUAFiltrado,1)+'</td>'+
+    '<td style="text-align:right" class="mono">'+fmt(totalUAFiltrado,2)+'</td>'+
     '<td></td><td></td></tr>';
 
   var totalGeralCab=todosLotes.reduce(function(s,l){return s+l.anm;},0);
@@ -2304,7 +2304,7 @@ function renderPiquetesPage(){
       '<td>'+p.name+'</td>'+
       '<td style="text-align:right"><input type="text" inputmode="decimal" data-area="'+p.id+'" value="'+(p.area==null?'':p.area)+'" style="width:85px;text-align:right;"></td>'+
       '<td style="text-align:right"><input type="text" inputmode="decimal" data-uaalvo="'+p.id+'" value="'+p.uaHaAlvo.toFixed(2)+'" style="width:70px;text-align:right;"></td>'+
-      '<td style="text-align:right" class="mono">'+(cap!=null?fmt(cap,1):'—')+'</td>'+
+      '<td style="text-align:right" class="mono">'+(cap!=null?fmt(cap,2):'—')+'</td>'+
       '<td>'+(grupoTxt?'<span class="tag" style="background:#EFEAD6;">'+grupoTxt+'</span> <button class="btn-x" data-remove-grupo="'+p.id+'" title="tirar do grupo" style="font-size:10px;">×</button>':'<span style="opacity:.4;font-size:11px;">—</span>')+'</td>'+
       '<td><button class="btn-x" data-del-piquete="'+p.id+'">×</button></td>'+
     '</tr>';
@@ -2393,7 +2393,7 @@ function renderPiqueteSearch(){
       var capTotal=piqs.reduce(function(s,p){return s+(piqueteCapacidade(p)||0);},0);
       var usadoTotal=piqs.reduce(function(s,p){return s+piqueteConfirmedUA(p.id);},0);
       var ratio=capTotal>0?usadoTotal/capTotal:0, status=ratio>=.85?'full':(usadoTotal>0?'partial':'free');
-      return '<div class="dist-piq '+status+'" data-add-grupo="'+g+'" title="'+piqs.map(function(p){return p.name;}).join(', ')+'"><b>'+g+' ('+piqs.length+')</b><small>'+fmt(Math.max(capTotal-usadoTotal,0),1)+' UA livre</small></div>';
+      return '<div class="dist-piq '+status+'" data-add-grupo="'+g+'" title="'+piqs.map(function(p){return p.name;}).join(', ')+'"><b>'+g+' ('+piqs.length+')</b><small>'+fmt(Math.max(capTotal-usadoTotal,0),2)+' UA livre</small></div>';
     }).join('');
   }
   if(individuaisFiltrados.length){
@@ -2403,8 +2403,8 @@ function renderPiqueteSearch(){
       var cap=piqueteCapacidade(p);
       var usado=piqueteConfirmedUA(p.id);
       var status=statusDe(p);
-      var info=p.area==null?'sem área':fmt(Math.max((cap||0)-usado,0),1)+' UA livre';
-      var title=p.name+' — '+(p.area==null?'área/capacidade não informada':fmt(p.area,1)+' ha · '+fmt(usado,1)+' de '+fmt(cap,1)+' UA ocupadas')+(piquetePlanosBreakdown(p.id).length?' — '+piquetePlanosBreakdown(p.id).map(function(b){return b.loteName+' ('+b.cab+' cab)';}).join(', '):'');
+      var info=p.area==null?'sem área':fmt(Math.max((cap||0)-usado,0),2)+' UA livre';
+      var title=p.name+' — '+(p.area==null?'área/capacidade não informada':fmt(p.area,2)+' ha · '+fmt(usado,2)+' de '+fmt(cap,2)+' UA ocupadas')+(piquetePlanosBreakdown(p.id).length?' — '+piquetePlanosBreakdown(p.id).map(function(b){return b.loteName+' ('+b.cab+' cab)';}).join(', '):'');
       return '<div class="dist-piq '+status+'" data-add-piquete="'+p.id+'" title="'+title+'"><b>'+p.name+'</b><small>'+info+'</small></div>';
     }).join('');
   }
@@ -2428,7 +2428,7 @@ function renderGrupo(){
     var usado=piqueteConfirmedUA(pid);
     var breakdown=piquetePlanosBreakdown(pid);
     if(p.area!=null){ areaTotal+=p.area; capTotal+=(cap||0); usadoOutrosTotal+=usado; } else { semArea=true; }
-    var linha1=p.name+' — '+(p.area!=null?fmt(p.area,1)+' ha · '+fmt(cap,1)+' UA cap':'sem área/capacidade');
+    var linha1=p.name+' — '+(p.area!=null?fmt(p.area,2)+' ha · '+fmt(cap,2)+' UA cap':'sem área/capacidade');
     var linha2=breakdown.length? '<div style="font-size:10.5px;opacity:.7;margin-top:2px;">já tem: '+breakdown.map(function(b){return fmtInt(b.cab)+' cab ('+b.loteName+')';}).join(' + ')+'</div>' : '';
     return '<div class="dist-selected-card"><div>'+
       '<span class="mono" style="font-size:12px;">'+linha1+'</span>'+
@@ -2441,11 +2441,11 @@ function renderGrupo(){
   html+='<div style="border-top:1px dashed rgba(255,255,255,.22);margin-top:6px;padding-top:8px;" class="mono">';
   if(temSaida){
     html+='<div style="font-size:11.5px;color:#F5D779;">Grupo de saída — não ocupa pasto'+(state.testGroup.length>1?' (não misture com piquetes reais)':'')+'</div>';
-    gauge.innerHTML='<div class="mono" style="font-size:12px;">'+fmtInt(cab)+' animais · '+fmt(ua,1)+' UA retiradas da lotação</div>'; resumo.textContent='Saída';
+    gauge.innerHTML='<div class="mono" style="font-size:12px;">'+fmtInt(cab)+' animais · '+fmt(ua,2)+' UA retiradas da lotação</div>'; resumo.textContent='Saída';
   }else{
     var pct=capTotal>0?(usadoOutrosTotal+ua)/capTotal*100:0;
-    html+='<div style="font-size:11.5px;">'+fmt(areaTotal,2)+' ha · '+fmt(capTotal,1)+' UA de capacidade'+(semArea?' · há piquete sem área':'')+'</div>';
-    gauge.innerHTML=barrilHTML(usadoOutrosTotal+ua,capTotal>0?capTotal:null)+'<div class="mono" style="font-size:11px;margin-top:9px;line-height:1.7;">Capacidade: '+fmt(capTotal,1)+' UA<br>Já ocupada: '+fmt(usadoOutrosTotal,1)+' UA<br>Esta distribuição: '+fmt(ua,1)+' UA ('+fmtInt(cab)+' cab)<br>Ocupação final: <b>'+fmt(pct,0)+'%</b></div>';
+    html+='<div style="font-size:11.5px;">'+fmt(areaTotal,2)+' ha · '+fmt(capTotal,2)+' UA de capacidade'+(semArea?' · há piquete sem área':'')+'</div>';
+    gauge.innerHTML=barrilHTML(usadoOutrosTotal+ua,capTotal>0?capTotal:null)+'<div class="mono" style="font-size:11px;margin-top:9px;line-height:1.7;">Capacidade: '+fmt(capTotal,2)+' UA<br>Já ocupada: '+fmt(usadoOutrosTotal,2)+' UA<br>Esta distribuição: '+fmt(ua,2)+' UA ('+fmtInt(cab)+' cab)<br>Ocupação final: <b>'+fmt(pct,0)+'%</b></div>';
     resumo.textContent=pct>100?'Não cabe':(pct>=85?'No limite':'Cabe'); resumo.style.color=pct>100?'#A63D2F':(pct>=85?'#9B6B14':'#2E684A');
   }
   html+='</div>';
@@ -2457,14 +2457,14 @@ function renderDistribuicoesConfirmadas(){
   var plans=planosDistribuicao();
   if(!plans.length){wrap.innerHTML='<div style="font-size:12px;color:#6B756E;margin-top:8px;">O planejamento ainda está vazio.</div>';renderRevisaoRascunho();return;}
   var controls='<div class="paper" style="padding:10px 12px;margin-top:9px;background:#F7F8F4;display:flex;align-items:center;gap:9px;flex-wrap:wrap;"><b style="font-size:12px;">Grupo de lotes:</b><span style="font-size:11px;color:#6B756E;">marque dois ou mais lotes que andarão juntos</span><button class="btn-gold" id="btnAgruparLotes">Juntar lotes selecionados</button></div>';
-  wrap.innerHTML=controls+plans.map(function(pl){var saida=planoIsSaida(pl),ua=pl.cab*pl.peso/state.uaKg,origem=(pl.piqueteAnterior||'').trim();return '<div class="dist-confirm-card" style="'+(state.editingPlanId===pl.id?'outline:3px solid #D3A342;':'')+'"><div style="display:flex;align-items:flex-start;gap:9px;"><input type="checkbox" class="draft-group-check" value="'+pl.id+'" style="width:18px;height:18px;margin-top:2px;"><div><b>'+pl.loteName+'</b>'+(pl.grupoLotesNome?'<div style="margin-top:3px;"><span class="tag" style="background:#E7D9F4;color:#563B6C;">grupo: '+pl.grupoLotesNome+'</span> <button class="btn-x" data-ungroup="'+pl.grupoLotesId+'" title="desfazer grupo">×</button></div>':'')+'<div class="mono" style="font-size:11px;color:#637168;margin-top:3px;">'+fmtInt(pl.cab)+' cab · '+fmt(ua,1)+' UA · '+(origem?origem+' → ':'')+pl.piquetes.map(function(p){return p.name;}).join(' + ')+(saida?' · Saída':'')+'</div></div></div><div style="display:flex;gap:6px;"><button class="btn-ghost" data-edit-draft="'+pl.id+'">editar</button><button class="btn-x" data-remove-draft="'+pl.id+'">×</button></div></div>';}).join('');
+  wrap.innerHTML=controls+plans.map(function(pl){var saida=planoIsSaida(pl),ua=pl.cab*pl.peso/state.uaKg,origem=(pl.piqueteAnterior||'').trim();return '<div class="dist-confirm-card" style="'+(state.editingPlanId===pl.id?'outline:3px solid #D3A342;':'')+'"><div style="display:flex;align-items:flex-start;gap:9px;"><input type="checkbox" class="draft-group-check" value="'+pl.id+'" style="width:18px;height:18px;margin-top:2px;"><div><b>'+pl.loteName+'</b>'+(pl.grupoLotesNome?'<div style="margin-top:3px;"><span class="tag" style="background:#E7D9F4;color:#563B6C;">grupo: '+pl.grupoLotesNome+'</span> <button class="btn-x" data-ungroup="'+pl.grupoLotesId+'" title="desfazer grupo">×</button></div>':'')+'<div class="mono" style="font-size:11px;color:#637168;margin-top:3px;">'+fmtInt(pl.cab)+' cab · '+fmt(ua,2)+' UA · '+(origem?origem+' → ':'')+pl.piquetes.map(function(p){return p.name;}).join(' + ')+(saida?' · Saída':'')+'</div></div></div><div style="display:flex;gap:6px;"><button class="btn-ghost" data-edit-draft="'+pl.id+'">editar</button><button class="btn-x" data-remove-draft="'+pl.id+'">×</button></div></div>';}).join('');
   renderRevisaoRascunho();
 }
 function renderRevisaoRascunho(){
   var box=el('revisaoRascunho');if(!box)return;
   var plans=planosDistribuicao(),map={},order=[];
   plans.forEach(function(pl){if(planoIsSaida(pl))return;var key=pl.piquetes.map(function(p){return p.id;}).sort().join('|');if(!map[key]){map[key]={pis:pl.piquetes,ua:0,cab:0,lotes:[]};order.push(key);}map[key].ua+=pl.cab*pl.peso/state.uaKg;map[key].cab+=pl.cab;map[key].lotes.push(pl.loteName);});
-  var rows=order.map(function(k){var g=map[k],cap=g.pis.reduce(function(s,p){return s+(p.capSnapshot||0);},0),pct=cap?g.ua/cap*100:null;return'<tr><td><b>'+g.pis.map(function(p){return p.name;}).join(' + ')+'</b><div style="font-size:10px;color:#6B756E;">'+g.lotes.join(' + ')+'</div></td><td class="mono" style="text-align:right">'+fmtInt(g.cab)+'</td><td class="mono" style="text-align:right">'+fmt(g.ua,1)+'</td><td class="mono" style="text-align:right">'+fmt(cap,1)+'</td><td class="mono" style="text-align:right;font-weight:800;color:'+(pct>100?'#A63D2F':pct>=85?'#9A6817':'#397049')+'">'+(pct==null?'—':fmt(pct,0)+'%')+'</td></tr>';}).join('');
+  var rows=order.map(function(k){var g=map[k],cap=g.pis.reduce(function(s,p){return s+(p.capSnapshot||0);},0),pct=cap?g.ua/cap*100:null;return'<tr><td><b>'+g.pis.map(function(p){return p.name;}).join(' + ')+'</b><div style="font-size:10px;color:#6B756E;">'+g.lotes.join(' + ')+'</div></td><td class="mono" style="text-align:right">'+fmtInt(g.cab)+'</td><td class="mono" style="text-align:right">'+fmt(g.ua,2)+'</td><td class="mono" style="text-align:right">'+fmt(cap,2)+'</td><td class="mono" style="text-align:right;font-weight:800;color:'+(pct>100?'#A63D2F':pct>=85?'#9A6817':'#397049')+'">'+(pct==null?'—':fmt(pct,0)+'%')+'</td></tr>';}).join('');
   box.innerHTML='<div class="paper" style="padding:15px;margin-top:16px;"><h2 class="serif" style="font-size:15px;margin:0 0 9px;">Situação planejada — revisão na mesma tela</h2><div style="overflow:auto"><table><thead><tr><th>Destino/piquetão</th><th style="text-align:right">Cabeças</th><th style="text-align:right">UA</th><th style="text-align:right">Capacidade</th><th style="text-align:right">Ocupação</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" style="padding:10px;opacity:.6;">Monte as distribuições para visualizar a lotação.</td></tr>')+'</tbody></table></div><div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px;"><button class="btn-ghost" id="btnDescartarRascunho">Descartar alterações</button><button class="btn-gold" id="btnConfirmarCompleto">✓ Confirmar planejamento completo</button></div><div id="rascunhoMsg" style="font-size:11px;text-align:right;margin-top:5px;color:#397049;"></div></div>';
 }
 
@@ -2617,7 +2617,7 @@ function planoRodadaHTML(pl){
     return '<div>'+
       '<div class="mono" style="font-size:12.5px;font-weight:600;">🚚 '+fmtInt(pl.cab)+' animais de saída do rebanho (não ocupam pasto)</div>'+
       ((pl.piqueteAnterior||'').trim()?'<div class="mono" style="font-size:12px;margin-top:5px;color:#765414;font-weight:800;">Buscar no piquete anterior: '+pl.piqueteAnterior+'</div>':'')+
-      '<div class="mono" style="font-size:12px;margin-top:4px;">'+fmtInt(pl.cab)+' animais de '+fmt(pl.peso,0)+' kg méd → '+fmt(uaSaida,1)+' UA saíram do rebanho</div>'+
+      '<div class="mono" style="font-size:12px;margin-top:4px;">'+fmtInt(pl.cab)+' animais de '+fmt(pl.peso,0)+' kg méd → '+fmt(uaSaida,2)+' UA saíram do rebanho</div>'+
       '<span class="mono" style="font-size:10.5px;opacity:.6;">confirmado '+pl.dataConfirmacao+'</span>'+
       '<div><button class="btn-ghost" style="margin-top:6px;font-size:11px;" data-undo-plano="'+pl.id+'">desfazer</button></div>'+
     '</div>';
@@ -2642,7 +2642,7 @@ function planoRodadaHTML(pl){
     (origemTxt?'<div class="mono" style="font-size:12px;margin:7px 0;color:#765414;font-weight:800;">Piquete anterior: '+origemTxt+' → novo destino abaixo</div>':'')+
     '<div style="margin-top:5px;">'+piquetesLines+'</div>'+
     (pl.piquetes.length>1 ? '<div class="mono" style="font-size:11.5px;margin-top:4px;font-weight:600;">Área total do grupo: '+fmt(info.areaTotal,2)+' ha</div>' : '')+
-    '<div class="mono" style="font-size:12px;margin-top:6px;">'+fmtInt(pl.cab)+' animais de '+fmt(pl.peso,0)+' kg méd → '+fmt(info.uaTotal,1)+' UA total'+(info.uaHa!=null?' · '+fmt(info.uaHa,2)+' UA/ha':'')+'</div>'+
+    '<div class="mono" style="font-size:12px;margin-top:6px;">'+fmtInt(pl.cab)+' animais de '+fmt(pl.peso,0)+' kg méd → '+fmt(info.uaTotal,2)+' UA total'+(info.uaHa!=null?' · '+fmt(info.uaHa,2)+' UA/ha':'')+'</div>'+
     '<div class="mono" style="font-size:12px;font-weight:600;margin-top:4px;color:'+statusColor+';">'+statusTxt+'</div>'+
     (pl.piquetes.length>1 ? rotacaoHTML(pl) : '')+
     '<button class="btn-ghost" style="margin-top:8px;font-size:11px;" data-undo-plano="'+pl.id+'">desfazer</button>'+
@@ -2655,8 +2655,8 @@ function renderResumo(){
   el('resAlocado').textContent=fmtInt(r.totalAlocado);
   el('resADistribuir').textContent=fmtInt(r.totalADistribuir);
   el('resHaTotal').textContent=fmt(r.haTotal,2);
-  el('resUAUsada').textContent=fmt(r.uaUsada,1);
-  el('resUAVaga').textContent=fmt(r.uaVaga,1);
+  el('resUAUsada').textContent=fmt(r.uaUsada,2);
+  el('resUAVaga').textContent=fmt(r.uaVaga,2);
   if(r.uaVaga>0){
     el('resBarra').innerHTML=barrilHTML(r.uaNecessaria, r.uaVaga, true);
   }else{
@@ -2666,8 +2666,8 @@ function renderResumo(){
   var deficit=r.uaNecessaria-r.uaVaga;
   var txt, color;
   if(r.uaNecessaria<=0){ txt='Todo o rebanho já tem plano — nada pendente.'; color='#4C7A57'; }
-  else if(deficit>0){ txt='O restante do rebanho precisa de '+fmt(r.uaNecessaria,1)+' UA, mas só há '+fmt(r.uaVaga,1)+' UA de vaga — faltam '+fmt(deficit,1)+' UA.'; color='#A63D2F'; }
-  else{ txt='O restante do rebanho precisa de '+fmt(r.uaNecessaria,1)+' UA, há '+fmt(r.uaVaga,1)+' UA de vaga — sobram '+fmt(-deficit,1)+' UA.'; color='#4C7A57'; }
+  else if(deficit>0){ txt='O restante do rebanho precisa de '+fmt(r.uaNecessaria,2)+' UA, mas só há '+fmt(r.uaVaga,2)+' UA de vaga — faltam '+fmt(deficit,2)+' UA.'; color='#A63D2F'; }
+  else{ txt='O restante do rebanho precisa de '+fmt(r.uaNecessaria,2)+' UA, há '+fmt(r.uaVaga,2)+' UA de vaga — sobram '+fmt(-deficit,2)+' UA.'; color='#4C7A57'; }
   el('resGaugeTxt').textContent=txt;
   el('resGaugeTxt').style.color=color;
 }
@@ -2767,11 +2767,11 @@ function renderSituacao(){
     if(r.planos.length>1) loteTxt='<b>'+loteTxt+'</b><div style="font-size:10px;opacity:.68;margin-top:2px;">'+(pl.grupoLotesNome?'Composição: ':'')+pl.composicaoTxt+'</div>';
     return '<tr>'+ 
       '<td>'+loteTxt+'</td>'+ 
-      '<td class="mono" style="font-size:11.5px;">'+r.piquetesTxt+(pl.piquetes.length>1?' <span style="opacity:.55;">(piquetão, '+fmt(info.areaTotal,1)+' ha juntos)</span>':'')+'</td>'+ 
+      '<td class="mono" style="font-size:11.5px;">'+r.piquetesTxt+(pl.piquetes.length>1?' <span style="opacity:.55;">(piquetão, '+fmt(info.areaTotal,2)+' ha juntos)</span>':'')+'</td>'+ 
       '<td style="text-align:right" class="mono">'+fmtInt(pl.cab)+'</td>'+ 
       '<td style="text-align:right" class="mono">'+fmt(pl.peso,0)+'</td>'+ 
-      '<td style="text-align:right" class="mono">'+fmt(info.uaTotal,1)+'</td>'+ 
-      '<td style="text-align:right" class="mono">'+(info.capTotal>0?fmt(info.capTotal,1):'—')+'</td>'+ 
+      '<td style="text-align:right" class="mono">'+fmt(info.uaTotal,2)+'</td>'+ 
+      '<td style="text-align:right" class="mono">'+(info.capTotal>0?fmt(info.capTotal,2):'—')+'</td>'+ 
       '<td style="text-align:right;font-weight:700;color:'+color+';" class="mono">'+(pct!=null?fmt(pct,0)+'%':'—')+'</td>'+ 
     '</tr>';
   }).join('');
@@ -2780,7 +2780,7 @@ function renderSituacao(){
   var kpis=[
     {l:'Planos ativos na foto',v:fmtInt(d.planosCount)},
     {l:'Cabeças confirmadas (ativas)',v:fmtInt(d.totalCab)},
-    {l:'UA confirmada',v:fmt(d.totalUA,1)},
+    {l:'UA confirmada',v:fmt(d.totalUA,2)},
     {l:'Piquetes/grupos acima da capacidade',v:fmtInt(d.acimaCapacidade)}
   ];
   el('situacaoKpis').innerHTML=kpis.map(function(k){
@@ -3039,8 +3039,8 @@ function renderControlPasto(){
   el('controlPastoAlvoPadrao').value=String(cp.alvoPadrao==null?1.2:cp.alvoPadrao).replace('.',',');
   var kpis=[
     {l:'Cabeças',v:fmtInt(s.cab)},
-    {l:'UA total',v:fmt(s.ua,1)},
-    {l:'Área física',v:fmt(s.area,1)+' ha'},
+    {l:'UA total',v:fmt(s.ua,2)},
+    {l:'Área física',v:fmt(s.area,2)+' ha'},
     {l:'UA/ha geral',v:s.uaha!=null?fmt(s.uaha,2):'—'}
   ];
   el('controlPastoKpis').innerHTML=kpis.map(function(k){return'<div class="kpi"><div class="l">'+k.l+'</div><div class="v mono">'+k.v+'</div></div>';}).join('');
@@ -3049,18 +3049,18 @@ function renderControlPasto(){
     var occ=(g.animais||0)>0||(g.ua||0)>0;
     return'<tr style="'+(!occ?'opacity:.62;':'')+'">'+
       '<td><b>'+escRec(g.label)+'</b>'+cpGroupDetailHtml(g)+'</td>'+
-      '<td class="mono" style="text-align:right;">'+fmt(g.area,1)+'</td>'+
+      '<td class="mono" style="text-align:right;">'+fmt(g.area,2)+'</td>'+
       '<td class="mono" style="text-align:right;font-weight:'+(occ?'800':'400')+';">'+fmtInt(g.animais)+'</td>'+
       '<td class="mono" style="text-align:right;">'+(g.pesoCab!=null?fmt(g.pesoCab,0):'—')+'</td>'+
-      '<td class="mono" style="text-align:right;">'+fmt(g.ua,1)+'</td>'+
+      '<td class="mono" style="text-align:right;">'+fmt(g.ua,2)+'</td>'+
       '<td class="mono" style="text-align:right;font-weight:'+(occ?'900':'400')+';color:'+(g.ocupUaHa!=null&&g.ocupUaHa>=3?'#A63D2F':'#315f43')+';">'+(g.ocupUaHa!=null?fmt(g.ocupUaHa,2):'—')+'</td>'+
       '<td class="mono" style="text-align:right;">'+(g.md30!=null?fmt(g.md30,2):'—')+'</td>'+
       '<td class="mono" style="text-align:right;">'+(g.md60!=null?fmt(g.md60,2):'—')+'</td>'+
       '<td class="mono" style="text-align:right;">'+(g.md90!=null?fmt(g.md90,2):'—')+'</td></tr>';
   }).join('');
   el('controlPastoTableFoot').innerHTML='<tr style="font-weight:900;border-top:2px solid #315f43;background:#f2f5f2;">'+
-    '<td>TOTAL / MÉDIA GERAL</td><td style="text-align:right;">'+fmt(s.area,1)+'</td><td style="text-align:right;">'+fmtInt(s.cab)+'</td><td></td>'+
-    '<td style="text-align:right;">'+fmt(s.ua,1)+'</td><td style="text-align:right;">'+(s.uaha!=null?fmt(s.uaha,2):'—')+'</td><td></td><td></td><td></td></tr>';
+    '<td>TOTAL / MÉDIA GERAL</td><td style="text-align:right;">'+fmt(s.area,2)+'</td><td style="text-align:right;">'+fmtInt(s.cab)+'</td><td></td>'+
+    '<td style="text-align:right;">'+fmt(s.ua,2)+'</td><td style="text-align:right;">'+(s.uaha!=null?fmt(s.uaha,2):'—')+'</td><td></td><td></td><td></td></tr>';
 }
 function cpTargetForPhysical(r,defaultAlvo){
   var n=normalizarNomeControle(r.nome);
@@ -3140,7 +3140,7 @@ function cpPrintPdf(){
       '<div style="font-size:9px;color:#7b877f;margin-top:1mm;">Importado: '+importBr+'</div></div></div>';
     if(pg===0){
       h+='<div class="avoid-break" style="display:grid;grid-template-columns:repeat(4,1fr);gap:2.7mm;margin-bottom:5mm;">';
-      [[fmtInt(s.cab),'Cabeças'],[fmt(s.ua,1),'UA total'],[fmt(s.area,1)+' ha','Área informada'],[s.uaha!=null?fmt(s.uaha,2):'—','UA/ha geral']].forEach(function(k){
+      [[fmtInt(s.cab),'Cabeças'],[fmt(s.ua,2),'UA total'],[fmt(s.area,2)+' ha','Área informada'],[s.uaha!=null?fmt(s.uaha,2):'—','UA/ha geral']].forEach(function(k){
         h+='<div style="border:1px solid #cfd8d1;border-top:3px solid #315f43;border-radius:2.2mm;padding:2.8mm 3.2mm;background:#fff;"><div style="font-size:8.5px;text-transform:uppercase;color:#66756b;font-weight:800;letter-spacing:.4px;">'+k[1]+'</div><div style="font-size:20px;font-weight:900;margin-top:1mm;">'+k[0]+'</div></div>';
       });h+='</div>';
       h+='<div style="font-size:13px;font-weight:900;color:#244b35;margin:2mm 0 2mm;">Carga instantânea por piquete</div>';
@@ -3154,10 +3154,10 @@ function cpPrintPdf(){
       var occ=(r.animais||0)>0||(r.ua||0)>0;
       h+='<tr style="border-bottom:1px solid #d9e0db;background:'+(occ?'#fff':'#f7f8f7')+';">'+
         '<td style="padding:1.65mm;font-weight:900;">'+escRec(r.label||r.nome)+'</td>'+
-        '<td style="padding:1.65mm;text-align:right;">'+(r.area!=null?fmt(r.area,1):'—')+'</td>'+
+        '<td style="padding:1.65mm;text-align:right;">'+(r.area!=null?fmt(r.area,2):'—')+'</td>'+
         '<td style="padding:1.65mm;text-align:right;font-weight:800;">'+(r.animais!=null?fmtInt(r.animais):'0')+'</td>'+
         '<td style="padding:1.65mm;text-align:right;">'+(r.pesoCab!=null?fmt(r.pesoCab,0):'—')+'</td>'+
-        '<td style="padding:1.65mm;text-align:right;">'+(r.ua!=null?fmt(r.ua,1):'0,0')+'</td>'+
+        '<td style="padding:1.65mm;text-align:right;">'+(r.ua!=null?fmt(r.ua,2):'0,00')+'</td>'+
         '<td style="padding:1.65mm;text-align:right;font-weight:900;color:#315f43;">'+(r.ocupUaHa!=null?fmt(r.ocupUaHa,2):'—')+'</td>'+
         '<td style="padding:1.65mm;text-align:right;">'+(r.md30!=null?fmt(r.md30,2):'—')+'</td>'+
         '<td style="padding:1.65mm;text-align:right;">'+(r.md60!=null?fmt(r.md60,2):'—')+'</td>'+
@@ -4021,7 +4021,7 @@ function gerarRecorridaEconomica(){
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:3mm;margin-bottom:3mm;"><div><div style="font-size:9px;font-weight:800;letter-spacing:1.4px;">FAZENDA</div><div style="font-size:22px;font-weight:900;">'+nome+'</div><div style="font-size:13px;font-weight:900;margin-top:1mm;">RECORRIDA MENSAL DE PASTAGENS</div></div><div style="font-size:10.5px;line-height:1.8;text-align:right;"><b>Data:</b> '+dataBr+' &nbsp;&nbsp; <b>Responsável:</b> __________________________<br><b>Página:</b> '+(pg+1)+' / '+paginas+'</div></div>';
     h+='<div style="font-size:9.5px;margin-bottom:2.5mm;"><b>UA/ha alvo</b> = capacidade cadastrada no sistema. &nbsp; <b>UA/ha sugerida</b> = sugestão observada no campo para posterior validação.</div>';
     h+='<table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10.5px;border:1px solid #555;"><colgroup><col style="width:4%"><col style="width:18%"><col style="width:5%"><col style="width:6%"><col style="width:7%"><col style="width:6%"><col style="width:8%"><col style="width:8%"><col style="width:11%"><col style="width:27%"></colgroup><thead><tr style="border-bottom:2px solid #000;"><th style="padding:2mm 1.5mm;">Nº</th><th style="padding:2mm;text-align:left;">PIQUETE / GRUPO</th><th style="padding:2mm;text-align:right;">ha</th><th style="padding:2mm;text-align:right;">CAB.</th><th style="padding:2mm;text-align:right;">PESO kg</th><th style="padding:2mm;text-align:right;">UA</th><th style="padding:2mm;text-align:right;">UA/ha ATUAL</th><th style="padding:2mm;text-align:right;">UA/ha ALVO</th><th style="padding:2mm;text-align:center;">UA/ha SUGERIDA</th><th style="padding:2mm;text-align:left;">OBSERVAÇÃO</th></tr></thead><tbody>';
-    parte.forEach(function(r,i){var n=pg*porPagina+i+1;h+='<tr style="height:9.5mm;border-bottom:1px solid #aaa;"><td style="padding:1.5mm;text-align:center;font-weight:800;">'+n+'</td><td style="padding:1.5mm 2mm;font-size:12px;font-weight:900;">'+r.nome+'</td><td style="padding:1.5mm;text-align:right;">'+fmt(r.area,1)+'</td><td style="padding:1.5mm;text-align:right;font-weight:800;">'+fmtInt(r.cab)+'</td><td style="padding:1.5mm;text-align:right;font-weight:900;">'+(r.peso!=null?fmt(r.peso,0):'—')+'</td><td style="padding:1.5mm;text-align:right;">'+fmt(r.ua,1)+'</td><td style="padding:1.5mm;text-align:right;">'+fmt(r.uaha,2)+'</td><td style="padding:1.5mm;text-align:right;font-weight:900;">'+fmt(r.alvo,2)+'</td><td style="padding:1.5mm;text-align:center;font-size:14px;">________</td><td style="padding:1.5mm 2mm;"></td></tr>';});
+    parte.forEach(function(r,i){var n=pg*porPagina+i+1;h+='<tr style="height:9.5mm;border-bottom:1px solid #aaa;"><td style="padding:1.5mm;text-align:center;font-weight:800;">'+n+'</td><td style="padding:1.5mm 2mm;font-size:12px;font-weight:900;">'+r.nome+'</td><td style="padding:1.5mm;text-align:right;">'+fmt(r.area,2)+'</td><td style="padding:1.5mm;text-align:right;font-weight:800;">'+fmtInt(r.cab)+'</td><td style="padding:1.5mm;text-align:right;font-weight:900;">'+(r.peso!=null?fmtInt(r.peso):'—')+'</td><td style="padding:1.5mm;text-align:right;">'+fmt(r.ua,2)+'</td><td style="padding:1.5mm;text-align:right;">'+fmt(r.uaha,2)+'</td><td style="padding:1.5mm;text-align:right;font-weight:900;">'+fmt(r.alvo,2)+'</td><td style="padding:1.5mm;text-align:center;font-size:14px;">________</td><td style="padding:1.5mm 2mm;"></td></tr>';});
     while(parte.length<porPagina){parte.push(null);h+='<tr style="height:9.5mm;border-bottom:1px solid #aaa;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';}
     h+='</tbody></table><div style="display:flex;justify-content:space-between;margin-top:3mm;font-size:9px;"><span>Uso de campo · impressão econômica em preto e branco</span><span>1 UA = '+fmt(state.uaKg,0)+' kg</span></div></div>';
   }
@@ -4138,12 +4138,12 @@ el('btnSituacaoPdf').addEventListener('click',function(){
   if(!d.linhas.length){h+='<div style="padding:14mm;border:1px solid #ccd5cf;border-radius:4mm;text-align:center;font-size:16px;font-weight:700;">Nenhum plano confirmado ainda.</div>';}
   else{
     h+='<div class="avoid-break" style="display:grid;grid-template-columns:repeat(4,1fr);gap:2.7mm;margin-bottom:5mm;">';
-    [[d.totalCab,'Cabeças'],[fmt(d.totalUA,1),'UA confirmada'],[d.gruposCount,'Áreas ocupadas'],[d.acimaCapacidade,'Acima capacidade']].forEach(function(k,idx){
+    [[d.totalCab,'Cabeças'],[fmt(d.totalUA,2),'UA confirmada'],[d.gruposCount,'Áreas ocupadas'],[d.acimaCapacidade,'Acima capacidade']].forEach(function(k,idx){
       h+='<div style="border:1px solid #cfd8d1;border-top:3px solid '+(idx===3&&d.acimaCapacidade>0?'#A63D2F':'#315f43')+';border-radius:2.2mm;padding:2.8mm 3.2mm;background:#fff;"><div style="font-size:8.5px;text-transform:uppercase;color:#66756b;font-weight:800;letter-spacing:.4px;">'+k[1]+'</div><div style="font-size:20px;font-weight:900;margin-top:1mm;">'+k[0]+'</div></div>';
     }); h+='</div>';
     h+='<div class="avoid-break" style="border:1px solid #d1dad4;border-radius:3mm;padding:3mm 4mm 2mm;margin-bottom:5mm;"><div style="font-size:13px;font-weight:900;color:#244b35;margin-bottom:1mm;">Capacidade da fazenda × antes × após ajustes</div><div style="font-size:9.5px;color:#718078;margin-bottom:1mm;">A nova foto exclui os animais direcionados para Saída e mantém o crescimento pelo GMD.</div>'+grafico+'</div>';
     h+='<div style="font-size:13px;font-weight:900;color:#244b35;margin:2mm 0 2mm;">Ocupação consolidada por área</div><table style="width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed;margin-bottom:5mm;"><colgroup><col style="width:19%"><col style="width:27%"><col style="width:10%"><col style="width:12%"><col style="width:10%"><col style="width:11%"><col style="width:11%"></colgroup><thead><tr class="print-green" style="background:#315f43;color:white;"><th style="padding:2.1mm;text-align:left;">LOCAL</th><th style="padding:2.1mm;text-align:left;">LOTES</th><th style="padding:2.1mm;text-align:right;">CAB</th><th style="padding:2.1mm;text-align:right;">PESO</th><th style="padding:2.1mm;text-align:right;">UA</th><th style="padding:2.1mm;text-align:right;">CAP.</th><th style="padding:2.1mm;text-align:right;">OCUP.</th></tr></thead><tbody>';
-    d.linhas.forEach(function(r){var over=r.info.pct!=null&&r.info.pct>100;h+='<tr style="border-bottom:1px solid #d9e0db;background:'+(over?'#FFF0ED':'#fff')+';"><td style="padding:2mm;font-weight:900;">'+r.piquetesTxt+'</td><td style="padding:2mm;">'+r.pl.loteName+'</td><td style="padding:2mm;text-align:right;font-weight:800;">'+fmtInt(r.pl.cab)+'</td><td style="padding:2mm;text-align:right;">'+fmt(r.pl.peso,1)+'</td><td style="padding:2mm;text-align:right;">'+fmt(r.info.uaTotal,1)+'</td><td style="padding:2mm;text-align:right;">'+fmt(r.info.capTotal,1)+'</td><td style="padding:2mm;text-align:right;font-weight:900;color:'+(over?'#A63D2F':(r.info.pct>=85?'#9a741e':'#315f43'))+';">'+fmt(r.info.pct,0)+'%</td></tr>';});
+    d.linhas.forEach(function(r){var over=r.info.pct!=null&&r.info.pct>100;h+='<tr style="border-bottom:1px solid #d9e0db;background:'+(over?'#FFF0ED':'#fff')+';"><td style="padding:2mm;font-weight:900;">'+r.piquetesTxt+'</td><td style="padding:2mm;">'+r.pl.loteName+'</td><td style="padding:2mm;text-align:right;font-weight:800;">'+fmtInt(r.pl.cab)+'</td><td style="padding:2mm;text-align:right;">'+fmtInt(r.pl.peso)+'</td><td style="padding:2mm;text-align:right;">'+fmt(r.info.uaTotal,2)+'</td><td style="padding:2mm;text-align:right;">'+fmt(r.info.capTotal,2)+'</td><td style="padding:2mm;text-align:right;font-weight:900;color:'+(over?'#A63D2F':(r.info.pct>=85?'#9a741e':'#315f43'))+';">'+fmt(r.info.pct,0)+'%</td></tr>';});
     h+='</tbody></table>';
     h+='<div class="avoid-break"><div style="font-size:13px;font-weight:900;color:#244b35;margin:2mm 0;">Projeção de lotação — próximos 6 meses</div><table style="width:100%;border-collapse:collapse;font-size:9.7px;table-layout:fixed;"><thead><tr class="print-soft" style="background:#eef3ef;"><th style="padding:1.8mm;text-align:left;width:34%;">LOCAL / LOTES</th>'; d.mesLabels.forEach(function(m){h+='<th style="padding:1.8mm;text-align:right;">'+m+'</th>';}); h+='</tr></thead><tbody>';
     d.linhas.forEach(function(r){h+='<tr style="border-bottom:1px solid #ddd;"><td style="padding:1.8mm;"><b>'+r.piquetesTxt+'</b><br><span style="color:#68756d;">'+r.pl.loteName+'</span></td>';r.projPct.forEach(function(v){h+='<td style="padding:1.8mm;text-align:right;font-weight:800;color:'+(v>100?'#A63D2F':(v>=85?'#9a741e':'#315f43'))+';">'+fmt(v,0)+'%</td>';});h+='</tr>';}); h+='</tbody></table></div>';
