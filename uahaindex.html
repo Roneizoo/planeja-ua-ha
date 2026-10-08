@@ -412,6 +412,32 @@ body{min-height:100vh;}
 .cmpTable input:focus{outline:2px solid #8a5a2b;outline-offset:-2px;background:#FFFDF5;}
 .cmpTable input[data-editalvo]{text-align:center;}
 .cmpTable tfoot td{padding:0 8px;height:32px;}
+/* Simulação: caixa com rolagem própria, título / coluna Piquete / total travados */
+#ybp .simBusca{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #DCD6BE;}
+#ybp .simBusca input{height:34px;min-width:220px;flex:0 1 320px;border:1px solid #C9C2A6;border-radius:8px;padding:0 10px;font-size:13px;background:#FFFDF5;box-sizing:border-box;}
+#ybp .simBusca .simBuscaInfo{font-size:11.5px;opacity:.7;}
+#ybp .simTabScroll{max-height:calc(100vh - 150px);overflow:auto;border-radius:0 0 13px 13px;}
+#ybp .cmpTable.simTab{border-collapse:separate;border-spacing:0;min-width:1180px;width:100%;}
+#ybp .cmpTable.simTab th{position:sticky;top:0;z-index:3;border:0;border-right:1px solid #C9C2A6;border-bottom:1px solid #C9C2A6;}
+#ybp .cmpTable.simTab td{padding:3px 6px;border:0;border-right:1px solid #DCD6BE;border-bottom:1px solid #DCD6BE;background:#F7F3E8;}
+#ybp .cmpTable.simTab tbody tr:nth-child(even) td{background:#FAF8F0;}
+#ybp .cmpTable.simTab tbody tr:hover td{background:#F1EEDD;}
+#ybp .cmpTable.simTab th:first-child,#ybp .cmpTable.simTab td:first-child{position:sticky;left:0;width:210px;min-width:210px;max-width:210px;box-shadow:2px 0 3px -1px rgba(0,0,0,.18);}
+#ybp .cmpTable.simTab th:first-child{z-index:5;}
+#ybp .cmpTable.simTab td:first-child{z-index:2;}
+#ybp .cmpTable.simTab tfoot td{position:sticky;bottom:0;z-index:3;background:#F1EEDD;border-top:1px solid #C9C2A6;font-weight:700;}
+#ybp .cmpTable.simTab tfoot td:first-child{z-index:5;}
+#ybp .cmpTable.simTab td.simNomeCel{padding:4px 8px;line-height:1.25;white-space:normal;}
+#ybp .simNomeCel .simNome{font-weight:700;}
+#ybp .simNomeCel .simQtd{opacity:.55;font-size:10.5px;font-weight:400;}
+#ybp .simMembros{font-size:10.5px;color:#6b6a58;margin-top:2px;word-break:break-word;}
+#ybp .simMembros .simMaisBtn{border:0;background:#E7E1C8;color:#4a4632;border-radius:6px;font-size:10.5px;padding:1px 6px;cursor:pointer;margin-left:2px;}
+#ybp .simMembros mark{background:#FFE08A;color:#2B2A22;border-radius:3px;padding:0 2px;}
+@media(max-width:760px){
+  #ybp .cmpTable.simTab th:first-child,#ybp .cmpTable.simTab td:first-child{width:150px;min-width:150px;max-width:150px;}
+  #ybp .simTabScroll{max-height:calc(100vh - 120px);}
+}
+
 .distSecaoTitulo{font-size:10.5px;opacity:.6;margin:8px 0 6px;width:100%;font-weight:700;letter-spacing:.03em;}
 #piquetesTableBody tr{cursor:pointer;}
 #piquetesTableBody tr:hover{background:#F7F3E8;}
@@ -1593,7 +1619,7 @@ function blankState(){
     currentPage:'inicio',selectedLoteId:null,testGroup:[],testCab:null,testPeso:null,testDataVenda:null,editingPlanId:null,
     homeQuarter:false,loteSortKey:null,loteSortDir:1,
     snapshotAntes:null,estoqueInicial:null,entradas:[],movimentosAplicados:[],
-    simTirar:{},simEntrar:{},simPesoSaidaLinha:{},simPesoEntradaLinha:{},simTirarManual:{},simEntrarManual:{},piquetesParaAgrupar:[]};
+    simTirar:{},simEntrar:{},simPesoSaidaLinha:{},simPesoEntradaLinha:{},simTirarManual:{},simEntrarManual:{},simAlvoExtra:{},piquetesParaAgrupar:[]};
 }
 function exportarEstrutura(){
   var dados=state.piquetes.filter(function(p){return !p.saida;}).map(function(p){
@@ -1706,14 +1732,27 @@ function estadoAtualPorPiquete(){
   Object.keys(mapa).forEach(function(k){var m=mapa[k];m.peso=m.cab?m.kg/m.cab:0;m.ua=m.kg/(state.uaKg||450);});
   return mapa;
 }
+var cpNomesRepetidos=[]; // nomes que aparecem mais de uma vez no Control Pasto: [{nome,itemIds:[...]}] (somados, não sobrescritos)
 function estadoAntesControlPasto(){
   var rows=cpPhysicalRows();
+  cpNomesRepetidos=[];
   if(!rows.length)return null;
-  var mapa={};
+  var mapa={},repetidos={};
   rows.forEach(function(r){
     var cab=Number(r.animais)||0,peso=Number(r.pesoCab)||0;
-    mapa[r.nome]={cab:cab,kg:cab*peso,peso:peso,ua:Number(r.ua)||0,lotes:cab>0?['Control Pasto']:[]};
+    var ex=mapa[r.nome];
+    if(ex){
+      // mesmo nome de novo: soma em vez de sobrescrever (uma linha vazia não pode apagar a que tem animais)
+      ex.cab+=cab; ex.kg+=cab*peso; ex.ua+=Number(r.ua)||0; ex.area+=Number(r.area)||0;
+      ex.peso=ex.cab>0?ex.kg/ex.cab:0;
+      ex.lotes=ex.cab>0?['Control Pasto']:[];
+      if(!repetidos[r.nome])repetidos[r.nome]={nome:r.nome,itemIds:[ex._itemId]};
+      repetidos[r.nome].itemIds.push(r.itemId);
+    }else{
+      mapa[r.nome]={cab:cab,kg:cab*peso,peso:peso,ua:Number(r.ua)||0,area:Number(r.area)||0,lotes:cab>0?['Control Pasto']:[],_itemId:r.itemId};
+    }
   });
+  cpNomesRepetidos=Object.keys(repetidos).map(function(k){return repetidos[k];});
   return mapa;
 }
 function marcarSnapshotAntes(){
@@ -1743,6 +1782,16 @@ function linhasSimulacao(antes){
   var linhas=[];
   Object.keys(porGrupo).forEach(function(g){ linhas.push({key:'g:'+g,nome:g,piquetes:porGrupo[g]}); });
   semGrupo.forEach(function(p){ linhas.push({key:'p:'+p.id,nome:p.name,piquetes:[p]}); });
+  // Piquetes que têm animais no Control Pasto (ou na referência) mas não casam com nenhum piquete cadastrado: entram como linha própria, pra nada sumir
+  var nomesCadastrados={};
+  state.piquetes.filter(function(p){return !p.saida;}).forEach(function(p){nomesCadastrados[p.name]=true;});
+  Object.keys(antes||{}).forEach(function(nome){
+    var a=antes[nome];
+    if(nomesCadastrados[nome]||!a||!(a.cab>0))return;
+    var cad=piqueteByName(nome);
+    linhas.push({key:'x:'+nome,nome:nome,extra:true,motivo:(cad&&cad.saida)?'saida':'semcadastro',
+      piquetes:[{id:'x:'+nome,name:nome,area:a.area||0,uaHaAlvo:(state.simAlvoExtra&&state.simAlvoExtra[nome])||0}]});
+  });
   linhas.sort(function(a,b){return a.nome.localeCompare(b.nome,undefined,{numeric:true,sensitivity:'base'});});
   var uaKg=state.uaKg||450;
   var alvoMedio=alvoMedioPreenchido();
@@ -1758,14 +1807,16 @@ function linhasSimulacao(antes){
     var ua=kg/uaKg;
     var uaHaAtual=area>0?ua/area:null;
     var uaHaAlvo=linha.piquetes[0].uaHaAlvo;
-    return {key:linha.key,nome:linha.nome,piquetes:linha.piquetes,area:area,cab:cab,peso:peso,ua:ua,uaHaAtual:uaHaAtual,uaHaAlvo:uaHaAlvo,cap:cap};
+    return {key:linha.key,nome:linha.nome,extra:!!linha.extra,motivo:linha.motivo||'',piquetes:linha.piquetes,area:area,cab:cab,peso:peso,ua:ua,uaHaAtual:uaHaAtual,uaHaAlvo:uaHaAlvo,cap:cap};
   });
 }
 function calcularSugestaoTirar(l,pesoSaida){
+  if(l.extra&&!(l.area>0))return 0;
   var vagaUA=l.cap-l.ua;
   return vagaUA<-0.01?Math.ceil((-vagaUA)*(state.uaKg||450)/pesoSaida):0;
 }
 function calcularSugestaoEntrar(l,pesoEntrada){
+  if(l.extra&&!(l.area>0))return 0;
   var vagaUA=l.cap-l.ua;
   return vagaUA>0.01?Math.floor(vagaUA*(state.uaKg||450)/pesoEntrada):0;
 }
@@ -1774,6 +1825,46 @@ function antesAtualSimulacao(){
   return usaCP?estadoAntesControlPasto():(state.snapshotAntes?state.snapshotAntes.estado:null);
 }
 var simPctAberta=false; // tabela de % de lotação começa escondida
+var simBusca='';          // texto da busca de piquete na Simulação
+var simGruposAbertos={};  // grupos com a lista de membros aberta (key da linha -> true)
+var simInfoPorKey={};     // key da linha -> {nome, membros:[nomes ordenados]}
+function normBusca(s){return String(s==null?'':s).toLowerCase().replace(/\s+/g,'');}
+// Linha pequena abaixo do nome do grupo: 3 primeiros membros + "N mais ▾"; aberta mostra todos. Com busca ativa abre e destaca.
+function membrosHtmlSimulacao(key){
+  var info=simInfoPorKey[key];
+  if(!info||info.membros.length<2)return '';
+  var t=normBusca(simBusca);
+  var achou=t?info.membros.filter(function(n){return normBusca(n).indexOf(t)>=0;}):[];
+  var aberto=!!simGruposAbertos[key]||achou.length>0;
+  var lista=aberto?info.membros:info.membros.slice(0,3);
+  var partes=lista.map(function(n){return (t&&normBusca(n).indexOf(t)>=0)?'<mark>'+n+'</mark>':n;});
+  var h=partes.join(' + ');
+  var resto=info.membros.length-lista.length;
+  if(!aberto&&resto>0)h+=' <button type="button" class="simMaisBtn" data-simgrupo="'+key+'">+'+resto+' mais ▾</button>';
+  else if(aberto&&!t)h+=' <button type="button" class="simMaisBtn" data-simgrupo="'+key+'">▴ fechar</button>';
+  return h;
+}
+function atualizarMembrosSimulacao(){
+  var box=el('simulacaoBox'); if(!box)return;
+  box.querySelectorAll('.simMembros[data-key]').forEach(function(d){
+    d.innerHTML=membrosHtmlSimulacao(d.getAttribute('data-key'));
+  });
+}
+// Filtra as linhas da tabela pela busca (sem redesenhar: não perde o foco do campo)
+function aplicarFiltroSimulacao(){
+  var box=el('simulacaoBox'); if(!box)return;
+  var t=normBusca(simBusca), visiveis=0, total=0;
+  box.querySelectorAll('tr[data-simkey]').forEach(function(tr){
+    total++;
+    var info=simInfoPorKey[tr.getAttribute('data-simkey')];
+    var ok=!t||(info&&(normBusca(info.nome).indexOf(t)>=0||info.membros.some(function(n){return normBusca(n).indexOf(t)>=0;})));
+    tr.style.display=ok?'':'none';
+    if(ok)visiveis++;
+  });
+  atualizarMembrosSimulacao();
+  var inf=el('simBuscaInfo');
+  if(inf)inf.textContent=!t?'':(visiveis?visiveis+' de '+total+' linhas':'Nenhum piquete encontrado');
+}
 function renderSimulacao(){
   var box=el('simulacaoBox');
   if(!box)return;
@@ -1793,14 +1884,15 @@ function renderSimulacao(){
   if(!state.simPesoSaidaLinha)state.simPesoSaidaLinha={};
   if(!state.simPesoEntradaLinha)state.simPesoEntradaLinha={};
   var uaKg=state.uaKg||450;
+  simInfoPorKey={};
+  var antigoScroll=el('simTabScroll'), scrollTopAnt=antigoScroll?antigoScroll.scrollTop:0, scrollLeftAnt=antigoScroll?antigoScroll.scrollLeft:0;
   var linhas=linhasSimulacao(antes);
   var totalAtual=0,totalSimulado=0,totalUaAtual=0,totalUaSimulado=0,totalKgAtual=0,totalKgSimulado=0;
   var projLinhas=[];
 
   var linhasHtml=linhas.map(function(l){
-    var vagaUA=l.cap-l.ua;
-    var sugestaoTirar=vagaUA<-0.01?Math.ceil((-vagaUA)*uaKg/pesoSaidaGlobal):0;
-    var sugestaoEntrar=vagaUA>0.01?Math.floor(vagaUA*uaKg/pesoEntradaGlobal):0;
+    var sugestaoTirar=calcularSugestaoTirar(l,pesoSaidaGlobal);
+    var sugestaoEntrar=calcularSugestaoEntrar(l,pesoEntradaGlobal);
     if(!(l.key in state.simTirar))state.simTirar[l.key]=sugestaoTirar;
     if(!(l.key in state.simEntrar))state.simEntrar[l.key]=sugestaoEntrar;
     if(!(l.key in state.simPesoSaidaLinha))state.simPesoSaidaLinha[l.key]=Math.round(l.peso||pesoSaidaGlobal);
@@ -1823,8 +1915,11 @@ function renderSimulacao(){
     var cabFicou=l.cab-tirarEfetivo;
     projLinhas.push({nome:l.nome,piquetes:l.piquetes,area:l.area,cap:l.cap,cab:l.cab,peso:l.peso,cabFicou:cabFicou,pesoFicou:cabFicou>0?kgQueFicou/cabFicou:0,entrar:entrar,pesoEntrar:pesoEntrarLinha});
     var diffTxt=diff===0?'—':(diff>0?'<span style="color:#1F5C33;font-weight:700;">+'+diff+'</span>':'<span style="color:#A63D2F;font-weight:700;">'+diff+'</span>');
-    return '<tr>'+
-      '<td class="cmpCelTxt">'+l.nome+(l.piquetes.length>1?' <span style="opacity:.55;font-size:10.5px;">('+l.piquetes.length+')</span>':'')+'</td>'+
+    simInfoPorKey[l.key]={nome:l.nome,membros:l.piquetes.map(function(p){return p.name;}).sort(function(a,b){return String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'});})};
+    return '<tr data-simkey="'+l.key+'">'+
+      '<td class="cmpCelTxt simNomeCel"><div class="simNome">'+l.nome+(l.piquetes.length>1?' <span class="simQtd">('+l.piquetes.length+')</span>':'')+'</div>'+
+        (l.extra?'<div class="simMembros" style="color:#8a5a2b;">'+(l.motivo==='saida'?'marcado como saída no Planeja':'só no Control Pasto, sem cadastro')+'</div>':'')+
+        (l.piquetes.length>1?'<div class="simMembros" data-key="'+l.key+'">'+membrosHtmlSimulacao(l.key)+'</div>':'')+'</td>'+
       '<td class="cmpCelNum">'+fmt(l.area,2)+'</td>'+
       '<td class="cmpCelNum">'+fmtInt(l.cab)+'</td>'+
       '<td class="cmpCelNum">'+fmtInt(l.peso)+'</td>'+
@@ -1837,7 +1932,7 @@ function renderSimulacao(){
       '<td class="cmpCelNum"><input type="number" min="0" data-pesoentrar="'+l.key+'" value="'+Math.round(pesoEntrarLinha)+'"></td>'+
       '<td class="cmpCelNum" style="font-weight:700;">'+fmtInt(simulada)+'</td>'+
       '<td class="cmpCelNum">'+(simulada>0?fmtInt(pesoMedioSimulado):'—')+'</td>'+
-      '<td class="cmpCelNum">'+fmt(uaSimulada,2)+'</td>'+
+      '<td class="cmpCelNum">'+(l.area>0?fmt(uaSimulada/l.area,2):'—')+'</td>'+
       '<td class="cmpCelNum">'+diffTxt+'</td>'+
     '</tr>';
   }).join('');
@@ -1902,7 +1997,21 @@ function renderSimulacao(){
     'entrada líquida de <b style="color:#1F5C33;">'+diffTotal+'</b> animais':
     'retirada líquida de <b style="color:#A63D2F;">'+(-diffTotal)+'</b> animais');
 
-  box.innerHTML='<div class="paper" style="padding:14px 16px;margin-bottom:12px;font-size:12px;">Comparando com: <b>'+origemTxt+'</b></div>'+
+  var extras=linhas.filter(function(l){return l.extra;});
+  var totalOrigem=usaCP?cpPhysicalRows().reduce(function(sm,r){return sm+(Number(r.animais)||0);},0):Object.keys(antes).reduce(function(sm,k){return sm+((antes[k]&&antes[k].cab)||0);},0);
+  var confTxt=(Math.round(totalOrigem)===Math.round(totalAtual))?
+    '<span style="color:#1F5C33;font-weight:700;">✔ confere: '+fmtInt(totalOrigem)+' animais, o mesmo total da origem</span>':
+    '<span style="color:#A63D2F;font-weight:700;">⚠ não confere: origem '+fmtInt(totalOrigem)+' animais, tabela '+fmtInt(totalAtual)+' (diferença de '+fmtInt(totalOrigem-totalAtual)+') — pode haver piquetes com nome repetido</span>';
+  var avisoExtras='';
+  if(usaCP&&cpNomesRepetidos.length){
+    avisoExtras+='<div style="margin-top:6px;color:#8a5a2b;">Nomes repetidos somados: '+cpNomesRepetidos.map(function(rp){return rp.nome+' ('+rp.itemIds.filter(function(x){return x!=null&&x!=='';}).join(' + ')+')';}).join('; ')+'</div>';
+  }
+  if(extras.length){
+    var cabExtras=extras.reduce(function(sm,l){return sm+l.cab;},0);
+    var lista=extras.slice(0,12).map(function(l){return l.nome+' ('+fmtInt(l.cab)+')';}).join(', ')+(extras.length>12?' e mais '+(extras.length-12):'');
+    avisoExtras+='<div style="margin-top:6px;color:#8a5a2b;">'+extras.length+' piquete(s) com animais não casam com o cadastro do Planeja pelo nome e entraram como linha própria ('+fmtInt(cabExtras)+' animais): <b>'+lista+'</b>. Se for só diferença de nome, ajuste na aba Piquetes.</div>';
+  }
+  box.innerHTML='<div class="paper" style="padding:14px 16px;margin-bottom:12px;font-size:12px;">Comparando com: <b>'+origemTxt+'</b> · '+confTxt+avisoExtras+'</div>'+
     '<div class="paper" style="padding:14px 20px;margin-bottom:12px;">'+
       '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">'+
         '<label style="font-size:11px;">Peso de saída pra sugerir (kg)<br><input id="simPesoSaida" type="number" value="'+pesoSaidaGlobal+'" style="width:90px;"></label>'+
@@ -1911,20 +2020,25 @@ function renderSimulacao(){
       '</div>'+
       '<div style="font-size:11.5px;opacity:.7;margin-top:8px;">"Sair" e "Entrar" já vêm com a quantidade sugerida pra deixar cada linha no alvo (passe o mouse pra ver a sugestão de novo) — edite direto se quiser outro número. As colunas de peso ao lado são o peso específico dos animais que saem/entram, editável linha a linha. O "UA/ha alvo" também é editável direto na tabela.</div>'+
     '</div>'+
-    '<div class="paper" style="padding:8px 4px;overflow-x:auto;">'+
-    '<table class="cmpTable"><thead><tr>'+
+    '<div class="paper" style="padding:0;">'+
+    '<div class="simBusca"><input type="search" id="simBusca" placeholder="Buscar piquete (ex: 23, 24 C)…" value="'+simBusca.replace(/"/g,'&quot;')+'" autocomplete="off"><button class="btn-ghost" id="btnSimBuscaLimpa" type="button">Limpar</button><span class="simBuscaInfo" id="simBuscaInfo"></span></div>'+
+    '<div class="simTabScroll" id="simTabScroll">'+
+    '<table class="cmpTable simTab"><thead><tr>'+
       '<th style="text-align:left;">Piquete</th><th>Ha</th><th>Qtd.<br>atual</th><th>Peso méd.<br>atual</th><th>UA<br>atual</th>'+
       '<th>UA/ha<br>atual</th><th>UA/ha<br>alvo</th><th>Sair</th><th>Peso<br>saída</th><th>Entrar</th><th>Peso<br>entrada</th>'+
-      '<th>Qtd.<br>simulada</th><th>Peso méd.<br>simulado</th><th>UA<br>simulada</th><th>Diferença</th>'+
+      '<th>Qtd.<br>simulada</th><th>Peso méd.<br>simulado</th><th>UA/ha<br>simulada</th><th>Diferença</th>'+
     '</tr></thead><tbody>'+linhasHtml+'</tbody>'+
     '<tfoot><tr style="font-weight:700;background:#F1EEDD;">'+
       '<td class="cmpCelTxt">Total da fazenda</td><td></td><td class="cmpCelNum">'+fmtInt(totalAtual)+'</td><td></td>'+
-      '<td class="cmpCelNum">'+fmt(totalUaAtual,2)+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'+
-      '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td></td><td class="cmpCelNum">'+fmt(totalUaSimulado,2)+'</td>'+
+      '<td class="cmpCelNum">'+fmt(totalUaAtual,2)+'</td><td class="cmpCelNum">'+(areaFaz>0?fmt(totalUaAtual/areaFaz,2):'—')+'</td><td></td><td></td><td></td><td></td><td></td>'+
+      '<td class="cmpCelNum">'+fmtInt(totalSimulado)+'</td><td></td><td class="cmpCelNum">'+(areaFaz>0?fmt(totalUaSimulado/areaFaz,2):'—')+'</td>'+
       '<td class="cmpCelNum">'+(diffTotal>=0?'+':'')+diffTotal+'</td>'+
-    '</tr></tfoot></table></div>'+
+    '</tr></tfoot></table></div></div>'+
     '<div class="paper" style="padding:12px 20px;margin-top:12px;font-size:13px;">Resumo: fazenda tinha <b>'+fmtInt(totalAtual)+'</b> animais ('+fmtInt(totalKgAtual)+' kg), com essa simulação fica com <b>'+fmtInt(totalSimulado)+'</b> ('+fmtInt(totalKgSimulado)+' kg) — '+resumo+' ('+(kgDiffTotal>=0?'+':'')+fmtInt(kgDiffTotal)+' kg no total).</div>'+
     graficoHtml+tabelaPctHtml;
+  var novoScroll=el('simTabScroll');
+  if(novoScroll){novoScroll.scrollTop=scrollTopAnt;novoScroll.scrollLeft=scrollLeftAnt;}
+  aplicarFiltroSimulacao();
 }
 
 
@@ -4183,12 +4297,28 @@ el('simulacaoBox').addEventListener('change',function(e){
     var novoAlvo=parseFloat(e.target.value.replace(',','.'))||0;
     var antes2=antesAtualSimulacao();
     var linha=linhasSimulacao(antes2).find(function(l){return l.key===idAlvo;});
-    if(linha)linha.piquetes.forEach(function(p){p.uaHaAlvo=novoAlvo;});
+    if(linha&&linha.extra){ if(!state.simAlvoExtra)state.simAlvoExtra={}; state.simAlvoExtra[linha.nome]=novoAlvo; }
+    else if(linha)linha.piquetes.forEach(function(p){p.uaHaAlvo=novoAlvo;});
     saveState(); renderSimulacao();
   }
   if(e.target.id==='simPesoSaida'||e.target.id==='simPesoEntrada'){ saveState(); }
 });
+el('simulacaoBox').addEventListener('input',function(e){
+  if(e.target.id==='simBusca'){ simBusca=e.target.value; aplicarFiltroSimulacao(); }
+});
 el('simulacaoBox').addEventListener('click',function(e){
+  var btGrupo=e.target.closest&&e.target.closest('[data-simgrupo]');
+  if(btGrupo){
+    var kG=btGrupo.getAttribute('data-simgrupo');
+    simGruposAbertos[kG]=!simGruposAbertos[kG];
+    atualizarMembrosSimulacao();
+    return;
+  }
+  if(e.target.id==='btnSimBuscaLimpa'){
+    simBusca=''; var ib=el('simBusca'); if(ib){ib.value='';ib.focus();}
+    aplicarFiltroSimulacao();
+    return;
+  }
   if(e.target.id==='btnSimPctToggle'){
     simPctAberta=!simPctAberta;
     var bx=el('simPctBox'); if(bx) bx.style.display=simPctAberta?'block':'none';
