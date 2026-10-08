@@ -254,7 +254,7 @@ body{min-height:100vh;}
 #pg-distribuicao .dist-pool input{background:#fff;}
 #pg-distribuicao .dist-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#DDE8E1;margin:8px 0 12px;}
 #pg-distribuicao .dist-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;}
-#pg-distribuicao #piqueteSearchResults{display:flex;flex-wrap:wrap;gap:11px;max-height:470px;overflow:auto;padding:7px 4px 7px 3px;}
+#pg-distribuicao #piqueteSearchResults{display:flex;flex-wrap:wrap;gap:11px;padding:7px 4px 7px 3px;}
 #pg-distribuicao .dist-piq{position:relative;width:78px;height:78px;flex:0 0 78px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;cursor:pointer;border:3px solid transparent;box-shadow:0 3px 9px rgba(0,0,0,.18);transition:.15s ease;}
 #pg-distribuicao .dist-piq:hover{transform:translateY(-2px) scale(1.03);}
 #pg-distribuicao .dist-piq.sel{border-color:#F5D779;box-shadow:0 0 0 3px rgba(245,215,121,.3),0 4px 12px rgba(0,0,0,.25);}
@@ -264,12 +264,66 @@ body{min-height:100vh;}
 #pg-distribuicao .dist-piq.partial{background:#BF8D2F;}
 #pg-distribuicao .dist-piq.full{background:#AA4A40;}
 #pg-distribuicao .dist-piq.exit{background:#64736A;}
-#pg-distribuicao .dist-side{position:sticky;top:18px;display:flex;flex-direction:column;gap:12px;}
+#pg-distribuicao .dist-side{position:static;display:flex;flex-direction:column;gap:12px;min-width:0;}
 #pg-distribuicao .dist-group-panel{padding:16px;background:#173526;color:#F7F3E8;border:2px solid var(--app-gold);border-radius:15px;}
 #pg-distribuicao .dist-group-panel #grupoBox{border:0;background:transparent;min-height:86px!important;padding:8px 0!important;color:#F7F3E8;box-shadow:none;}
 #pg-distribuicao .dist-selected-card{display:flex;justify-content:space-between;align-items:center;gap:7px;background:rgba(255,255,255,.1);border-radius:9px;padding:8px 10px;margin-bottom:7px;}
 #pg-distribuicao .dist-fit{padding:16px;}
-#pg-distribuicao .dist-confirmed{margin-top:18px;}
+#pg-distribuicao .dist-confirmed{margin-top:0;padding:14px;}
+#pg-distribuicao .dist-work{scroll-margin-top:150px;}
+#pg-distribuicao .dist-lote-panel{scroll-margin-top:150px;}
+/* faixa fixa do lote: acompanha a rolagem pra a pessoa nunca perder o lote, a quantidade e o resultado */
+#pg-distribuicao .dist-faixa{position:sticky;top:8px;z-index:30;padding:10px 14px 12px;margin-bottom:14px;border-left:5px solid var(--app-gold);box-shadow:0 8px 22px rgba(0,0,0,.28);}
+#pg-distribuicao .dist-passos{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+#pg-distribuicao .dist-passo{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#8a8776;}
+#pg-distribuicao .dist-passo i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#E4DFC9;color:#6b6a58;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
+#pg-distribuicao .dist-passo.atual{color:#173526;}
+#pg-distribuicao .dist-passo.atual i{background:#C99A3B;color:#2B2200;}
+#pg-distribuicao .dist-passo.feito{color:#2E684A;}
+#pg-distribuicao .dist-passo.feito i{background:#3F7B58;color:#fff;}
+#pg-distribuicao .dist-passo + .dist-passo::before{content:"›";margin-right:2px;color:#b8b29a;font-weight:400;}
+#pg-distribuicao .dist-contador{margin-left:auto;font-size:11.5px;color:#4a5a50;}
+#pg-distribuicao .faixa-dica{font-size:12.5px;font-weight:700;color:#8a5a2b;}
+#pg-distribuicao .faixa-l1{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+#pg-distribuicao .faixa-lote{flex:1 1 220px;min-width:180px;}
+#pg-distribuicao .faixa-nome{font-size:20px;font-weight:800;color:#173526;}
+#pg-distribuicao .faixa-campo{font-size:11px;display:flex;flex-direction:column;gap:2px;}
+#pg-distribuicao .faixa-campo input{width:104px;height:34px;font-size:15px;font-weight:700;}
+#pg-distribuicao .faixa-qtd{font-size:11.5px;color:#4a5a50;padding-bottom:7px;}
+#pg-distribuicao .faixa-qtd b{font-size:15px;color:#173526;}
+#pg-distribuicao .dist-faixa .dist-progress{height:6px;margin-top:8px;}
+#pg-distribuicao .dist-faixa-l2{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px dashed #D8D0B8;}
+#pg-distribuicao .dist-faixa.sem-lote .dist-faixa-l2{display:none;}
+#pg-distribuicao .faixa-piquetes{flex:1 1 240px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0;}
+#pg-distribuicao .faixa-chip{display:inline-flex;align-items:center;gap:4px;background:#173526;color:#F7F3E8;border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;font-weight:700;}
+#pg-distribuicao .faixa-chip button{background:rgba(255,255,255,.18);color:#fff;width:20px;height:20px;min-height:20px!important;border-radius:50%;font-size:13px;line-height:1;padding:0;}
+#pg-distribuicao .faixa-chip.mais{padding:3px 10px;background:#64736A;}
+#pg-distribuicao .faixa-vazio{font-size:12px;color:#8a5a2b;font-weight:700;}
+#pg-distribuicao .faixa-fit{display:inline-block;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:800;}
+#pg-distribuicao .faixa-fit.cabe{background:#DDEEDF;color:#1F5C33;}
+#pg-distribuicao .faixa-fit.limite{background:#F8E8BF;color:#7A5410;}
+#pg-distribuicao .faixa-fit.nao{background:#F6D6D1;color:#A63D2F;}
+#pg-distribuicao .faixa-fit.saida{background:#E4E8E3;color:#3b4a41;}
+#pg-distribuicao .faixa-acao{display:flex;flex-direction:column;gap:3px;}
+#pg-distribuicao #distFaixa #btnConfirmarPlano{min-width:200px;min-height:46px!important;font-size:14px!important;}
+#pg-distribuicao .faixa-msg{font-size:12px;font-weight:800;color:#1F5C33;}
+/* lista de lotes em cartões (sem rolagem interna) */
+#pg-distribuicao .dist-lote-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px;}
+#pg-distribuicao .dist-lote-card{cursor:pointer;border:1px solid var(--app-line);border-radius:12px;background:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:5px;transition:.12s ease;}
+#pg-distribuicao .dist-lote-card:hover{border-color:#3F7B58;transform:translateY(-1px);}
+#pg-distribuicao .dist-lote-card.sel{border:2px solid #3F7B58;background:#E8F0E9;}
+#pg-distribuicao .dist-lote-card.done{opacity:.55;}
+#pg-distribuicao .dist-lote-card .num b{font-size:24px;color:#1F4A35;}
+#pg-distribuicao .dist-lote-card .num span{font-size:11px;margin-left:5px;color:#4a5a50;}
+#pg-distribuicao .dist-lote-card .sub{font-size:11px;color:#6B756E;}
+#pg-distribuicao .dist-lote-card .ok{font-size:11px;font-weight:800;color:#2E684A;}
+#pg-distribuicao .dist-vazio{grid-column:1/-1;padding:12px;opacity:.6;font-size:13px;}
+/* grupos de piquetes: cartão largo com os membros escritos */
+#pg-distribuicao .dist-piq.dist-grupo{width:200px;height:auto;min-height:78px;flex:0 0 200px;border-radius:16px;align-items:flex-start;justify-content:flex-start;text-align:left;padding:9px 12px;}
+#pg-distribuicao .dist-piq.dist-grupo b{max-width:none;white-space:normal;font-size:13px;}
+#pg-distribuicao .dist-membros{font-size:10.5px;line-height:1.4;margin-top:4px;opacity:.95;word-break:break-word;}
+#pg-distribuicao .dist-membros mark{background:#F5D779;color:#173526;border-radius:3px;padding:0 3px;font-weight:800;}
+#pg-distribuicao .dist-dica-pool{font-size:11px;color:#DDE8E1;opacity:.85;margin-bottom:8px;}
 #pg-distribuicao .dist-confirm-card{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 13px;margin-top:8px;border:1px solid var(--app-line);border-radius:10px;background:#fff;}
 #btnConfirmarPlano{
   min-height:52px !important;
@@ -294,6 +348,25 @@ body{min-height:100vh;}
 }
 @media (max-width: 1180px){#pg-distribuicao .dist-kpis{grid-template-columns:repeat(3,1fr);}#pg-distribuicao .dist-work{grid-template-columns:1fr 310px;}}
 @media (max-width: 820px){
+  #pg-distribuicao .dist-faixa{top:62px;padding:8px 10px 10px;}
+  #pg-distribuicao .dist-faixa:not(.sem-lote) .dist-contador{display:none;}
+  #pg-distribuicao .so-desk{display:none;}
+  #pg-distribuicao .dist-passos{gap:6px;}
+  #pg-distribuicao .dist-passo{font-size:11px;gap:4px;}
+  #pg-distribuicao .dist-passos [data-ir-revisao]{margin-left:auto;}
+  #pg-distribuicao .dist-faixa .dist-progress{display:none;}
+  #pg-distribuicao .faixa-l1{position:relative;gap:8px;}
+  #pg-distribuicao .faixa-lote{flex:1 1 100%;padding-right:108px;}
+  #pg-distribuicao .faixa-nome{font-size:17px;}
+  #pg-distribuicao .faixa-l1 [data-trocar-lote]{position:absolute;top:0;right:0;margin:0!important;font-size:11px;padding:4px 8px;min-height:30px!important;}
+  #pg-distribuicao .faixa-campo input{width:92px;height:32px;}
+  #pg-distribuicao .faixa-qtd{flex:1 1 100%;padding-bottom:0;}
+  #pg-distribuicao .dist-faixa-l2{margin-top:6px;padding-top:7px;gap:8px;}
+  #pg-distribuicao .faixa-piquetes{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;}
+  #pg-distribuicao .faixa-chip{flex:0 0 auto;}
+  #pg-distribuicao .faixa-fitbox{flex:1 1 auto;}
+  #pg-distribuicao #distFaixa #btnConfirmarPlano{min-width:0;padding:8px 12px;min-height:42px!important;font-size:13px!important;}
+  #pg-distribuicao .dist-work,#pg-distribuicao .dist-lote-panel{scroll-margin-top:210px;}
   #ybp{padding:12px;}
   #ybp .navbar{
     position:sticky;
@@ -612,6 +685,7 @@ body{min-height:100vh;}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
       <button class="btn-ghost" id="btnExportarEstrutura" style="font-size:11.5px;">💾 Exportar Estrutura (grupos e alvos)</button>
       <button class="btn-ghost" id="btnImportarEstrutura" style="font-size:11.5px;">📥 Importar Estrutura</button>
+      <button class="btn-ghost" id="btnRegruparCP" style="font-size:11.5px;" title="Agrupa os piquetes do jeito que estão agrupados (módulos) no Control Pasto">↻ Refazer grupos pelo Control Pasto</button>
       <input type="file" id="importEstruturaFile" accept=".json" style="display:none;">
     </div>
     <div id="recorridaMsg" style="font-size:11.5px;margin-bottom:8px;opacity:.8;"></div>
@@ -684,28 +758,36 @@ body{min-height:100vh;}
       <div id="resGaugeTxt" class="mono" style="font-size:12.5px;font-weight:600;margin-top:6px;"></div>
     </div>
 
-    <div class="paper dist-lote-panel">
-      <h2 class="serif" style="font-size:16px;margin:0;">1. Escolha o lote</h2>
-      <input id="loteSearch" type="search" placeholder="Buscar pelo nome do lote..." style="width:100%;margin-top:9px;">
-      <div class="dist-lote-table"><table><thead><tr><th>Lote</th><th>Piquete atual</th><th style="text-align:right">Total</th><th style="text-align:right">Distribuído</th><th style="text-align:right">A distribuir</th></tr></thead><tbody id="loteSearchResults"></tbody></table></div>
-      <div id="loteSelecionadoBox" style="margin-top:12px;"></div>
+    <div class="paper dist-faixa" id="distFaixa">
+      <div class="dist-passos" id="distPassos"></div>
+      <div id="loteSelecionadoBox"></div>
+      <div class="dist-faixa-l2" id="faixaLinha2">
+        <div class="faixa-piquetes" id="faixaPiquetes"></div>
+        <div class="faixa-fitbox" id="faixaFit"></div>
+        <div class="faixa-acao"><button class="btn-gold" id="btnConfirmarPlano">Adicionar ao planejamento</button><div id="confirmErr" style="color:#A63D2F;font-size:11px;text-align:center;"></div></div>
+      </div>
     </div>
 
-    <div class="dist-work">
-      <div class="dist-pool">
+    <div class="paper dist-lote-panel" id="distLotePanel">
+      <h2 class="serif" style="font-size:16px;margin:0;">1. Escolha o lote</h2>
+      <input id="loteSearch" type="search" placeholder="Buscar pelo nome do lote..." style="width:100%;margin-top:9px;">
+      <div id="loteSearchResults" class="dist-lote-grid"></div>
+    </div>
+
+    <div class="dist-work" id="distWork">
+      <div class="dist-pool" id="distPool">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;"><h2 style="font-size:15px;margin:0;color:#fff;">2. Selecione os piquetes do piquetão</h2><span id="piqueteStatusCount" class="mono" style="font-size:11px;opacity:.75;"></span></div>
         <div class="dist-legend"><span><i class="dist-dot" style="background:#3F7B58"></i>Livre</span><span><i class="dist-dot" style="background:#BF8D2F"></i>Parcial</span><span><i class="dist-dot" style="background:#AA4A40"></i>Cheio</span><span><i class="dist-dot" style="background:#64736A"></i>Saída</span></div>
-        <input id="piqueteSearch" type="search" placeholder="Buscar piquete..." style="width:100%;margin-bottom:9px;">
+        <input id="piqueteSearch" type="search" placeholder="Buscar piquete (ex: 23, 24 C)..." style="width:100%;margin-bottom:5px;">
+        <div class="dist-dica-pool">Toque num <b>grupo</b> para pegar todos os piquetes dele de uma vez. A busca também acha piquetes que estão dentro de um grupo.</div>
         <div id="piqueteSearchResults"></div>
       </div>
       <aside class="dist-side">
         <div class="dist-group-panel"><div style="display:flex;justify-content:space-between;align-items:center;"><b>Piquetão desta distribuição</b><span id="grupoCount" class="mono" style="font-size:11px;color:#F5D779;"></span></div><div id="grupoBox"></div></div>
         <div class="paper dist-fit"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><b>Cabe no grupo?</b><span id="fitResumo" class="mono" style="font-size:11px;color:#637168;">selecione os piquetes</span></div><div id="fitGauge" style="margin-top:8px;"></div></div>
-        <button class="btn-gold" id="btnConfirmarPlano">Adicionar ao planejamento</button>
-        <div id="confirmErr" style="color:#A63D2F;font-size:11px;text-align:center;"></div>
+        <div class="paper dist-confirmed" id="distConfirmedBox"><h2 class="serif" style="font-size:15px;margin:0;">Já planejado</h2><div style="font-size:11px;color:#6B756E;margin-top:3px;">Planejamento em preparação. Edite quantas vezes precisar; nada substitui o plano confirmado até usar o botão final lá embaixo.</div><div id="distribuicoesConfirmadas"></div></div>
       </aside>
     </div>
-    <div class="dist-confirmed"><h2 class="serif" style="font-size:15px;margin:0;">Planejamento completo em preparação</h2><div style="font-size:11px;color:#6B756E;margin-top:3px;">Edite quantas vezes precisar. Nada substitui o plano confirmado até usar o botão final.</div><div id="distribuicoesConfirmadas"></div></div>
     <div id="revisaoRascunho"></div>
   </div>
 
@@ -2486,19 +2568,88 @@ function prefixoComum(nomes){
   }
   return '';
 }
+// Rótulo do grupo: usa o começo comum dos nomes só quando ele é um "nome inteiro" (ex.: 12 B + 12 C -> "12";
+// 24 Ca..24 Cd -> "24 C"). Se o começo comum for só um pedaço de número (ex.: 10 A, 11 A, 12 A -> "1"), isso
+// misturaria módulos diferentes; então o rótulo vira a lista dos nomes (como no Control Pasto).
+function rotuloGrupoSeguro(nomes){
+  nomes=nomes.filter(Boolean);
+  if(!nomes.length) return '';
+  var pre=prefixoComum(nomes), t=pre.trim();
+  if(t.length>=2){
+    var ok=nomes.every(function(n){var prox=n.charAt(pre.length);return !/[0-9]/.test(prox);});
+    if(ok) return t;
+  }
+  if(nomes.length<=6) return nomes.join(' + ');
+  return nomes[0]+' … '+nomes[nomes.length-1]+' ('+nomes.length+')';
+}
+// Garante que o rótulo não seja igual ao de OUTRO grupo (senão os dois viram um grupo só).
+function rotuloGrupoLivre(rotulo,idsMembros){
+  var usados={};
+  state.piquetes.forEach(function(p){
+    var g=(p.grupo||'').trim();
+    if(g && idsMembros.indexOf(p.id)<0) usados[g.toLowerCase()]=1;
+  });
+  var r=rotulo.trim(), k=2;
+  while(usados[r.toLowerCase()]){ r=rotulo.trim()+' ('+(k++)+')'; }
+  return r;
+}
+// Grupo com um piquete só não é grupo: limpa.
+function limparGruposSolitarios(){
+  var cont={};
+  state.piquetes.forEach(function(p){var g=(p.grupo||'').trim(); if(g&&!p.saida) cont[g]=(cont[g]||0)+1;});
+  state.piquetes.forEach(function(p){var g=(p.grupo||'').trim(); if(g&&cont[g]===1) p.grupo='';});
+}
 function formarGrupo(){
   var ids=state.piquetesParaAgrupar||[];
   if(ids.length<2){alert('Marque pelo menos 2 piquetes pra formar um grupo.');return;}
   var piqs=ids.map(function(id){return piqueteById(id);}).filter(Boolean);
-  var nomeGrupo=prefixoComum(piqs.map(function(p){return p.name;}));
-  if(!nomeGrupo){
-    nomeGrupo=prompt('Não encontrei um prefixo em comum nos nomes. Digite o nome do grupo:','');
-    if(!nomeGrupo)return;
-  }
+  piqs=sortPiquetes(piqs);
+  var nomeGrupo=rotuloGrupoSeguro(piqs.map(function(p){return p.name;}));
+  nomeGrupo=rotuloGrupoLivre(nomeGrupo,piqs.map(function(p){return p.id;}));
   piqs.forEach(function(p){p.grupo=nomeGrupo;});
+  limparGruposSolitarios();
   state.piquetesParaAgrupar=[];
   saveState();
   renderPiquetesPage();
+}
+// Refaz os grupos conforme os módulos (PARENT_ID) do Control Pasto.
+// forcar=false (na importação): só mexe em piquete sem grupo ou em grupo "misturado" (que junta módulos diferentes).
+// forcar=true (botão): todos os piquetes que aparecem no Control Pasto ficam como no Control Pasto.
+function regrouparPorControlPasto(forcar){
+  var cp=cpData(); if(!cp) return {grupos:0,piquetes:0};
+  var rows=cp.rows||[], porParent={}, paiDoNome={};
+  rows.forEach(function(r){
+    var pid=String(r.parentId||'').trim(); if(!pid) return;
+    var n=normalizarNomeControle(r.nome);
+    if(paiDoNome[n]==null) paiDoNome[n]=pid;
+    if(!porParent[pid]) porParent[pid]=[];
+    if(porParent[pid].indexOf(n)<0) porParent[pid].push(n);
+  });
+  var reais=state.piquetes.filter(function(p){return !p.saida;});
+  var pPai=function(p){return paiDoNome[normalizarNomeControle(p.name)]||'';};
+  // grupos atuais "misturados"
+  var paisPorGrupo={};
+  reais.forEach(function(p){var g=(p.grupo||'').trim(); if(!g) return; (paisPorGrupo[g]=paisPorGrupo[g]||{})[pPai(p)||'?']=1;});
+  var misto=function(g){return Object.keys(paisPorGrupo[g]||{}).length>1;};
+  var gruposFeitos=0, pigsFeitos=0;
+  Object.keys(porParent).forEach(function(pid){
+    var membros=reais.filter(function(p){return pPai(p)===pid;});
+    if(membros.length<2){
+      if(forcar) membros.forEach(function(p){ if((p.grupo||'').trim()){p.grupo='';} });
+      return;
+    }
+    if(!forcar){
+      var livre=membros.every(function(p){var g=(p.grupo||'').trim(); return !g||misto(g);});
+      if(!livre) return;
+    }
+    membros=sortPiquetes(membros);
+    var ids=membros.map(function(p){return p.id;});
+    var rot=rotuloGrupoLivre(rotuloGrupoSeguro(membros.map(function(p){return p.name;})),ids);
+    membros.forEach(function(p){p.grupo=rot;});
+    gruposFeitos++; pigsFeitos+=membros.length;
+  });
+  limparGruposSolitarios();
+  return {grupos:gruposFeitos,piquetes:pigsFeitos};
 }
 function renderPiquetesPage(){
   var ordered=sortPiquetes(state.piquetes);
@@ -2542,29 +2693,103 @@ function renderPiquetesPage(){
 
 // ---------- distribuição page ----------
 function piqueteConfirmedUA(piqueteId){
-  return planosCalculoDistribuicao().filter(function(pl){return pl.piquetes.some(function(it){return it.id===piqueteId;});})
-    .reduce(function(s,pl){return s+pl.cab*pl.peso/state.uaKg;},0);
+  // A UA de um plano é dividida entre os piquetes do piquetão, proporcional à capacidade de cada um
+  // (se nenhum tiver capacidade informada, divide por igual). Assim a soma dos piquetes = UA do plano.
+  return planosCalculoDistribuicao().reduce(function(s,pl){
+    var meu=null,totCap=0,n=0;
+    pl.piquetes.forEach(function(it){
+      if(it.saida) return;
+      var pObj=piqueteById(it.id);
+      var c=(it.capSnapshot!=null)?it.capSnapshot:(pObj?piqueteCapacidade(pObj):null);
+      c=c||0; totCap+=c; n++;
+      if(it.id===piqueteId) meu=c;
+    });
+    if(meu===null||n===0) return s;
+    var ua=pl.cab*pl.peso/state.uaKg;
+    return s+(totCap>0?ua*meu/totCap:ua/n);
+  },0);
 }
 function piquetePlanosBreakdown(piqueteId){
   return planosCalculoDistribuicao().filter(function(pl){return pl.piquetes.some(function(it){return it.id===piqueteId;});})
     .map(function(pl){return {loteName:pl.loteName,cab:pl.cab};});
 }
+var distListaLotesAberta=true, distFitInfo=null, distMsg='', distMsgTimer=null;
+function renderFaixaDistribuicao(){
+  var faixa=el('distFaixa'); if(!faixa) return;
+  var l=state.selectedLoteId?loteById(state.selectedLoteId):null;
+  if(!l) distListaLotesAberta=true;
+  faixa.classList.toggle('sem-lote',!l);
+  var painel=el('distLotePanel');
+  if(painel) painel.style.display=(l&&!distListaLotesAberta)?'none':'';
+  var grupo=state.testGroup||[];
+  var passo=!l?1:(grupo.length?3:2);
+  var nomes=['Lote','Piquetes','Adicionar'];
+  var passosHtml=nomes.map(function(n,i){
+    var cls=(i+1<passo)?'feito':((i+1===passo)?'atual':'');
+    return '<span class="dist-passo '+cls+'"><i>'+((i+1<passo)?'✔':(i+1))+'</i>'+n+'</span>';
+  }).join('');
+  var ativos=state.lotes.filter(function(x){return x.ativo!==false;});
+  var completos=0, cabPlan=0, cabTot=0;
+  ativos.forEach(function(x){
+    var u=Math.min(loteConfirmedAllocated(x.id),x.anm);
+    cabPlan+=u; cabTot+=x.anm;
+    if(x.anm-u<=0) completos++;
+  });
+  var temPlanos=planosDistribuicao().length>0;
+  var dica=!l?'<span class="faixa-dica">👇 Toque em um lote abaixo para começar</span>':'';
+  var contador='<span class="dist-contador mono">Planejado: <b>'+completos+' de '+ativos.length+'</b> lotes · '+fmtInt(cabPlan)+' de '+fmtInt(cabTot)+' cab</span>';
+  var revisar=temPlanos?'<button class="btn-ghost" data-ir-revisao="1" style="font-size:11px;padding:3px 9px;">Revisar<span class="so-desk"> e confirmar</span> ↓</button>':'';
+  el('distPassos').innerHTML=passosHtml+dica+contador+revisar+'<span class="faixa-msg" id="faixaMsg">'+(distMsg||'')+'</span>';
+  // linha 2: chips + cabe?
+  var chipsBox=el('faixaPiquetes');
+  if(!l){ chipsBox.innerHTML=''; el('faixaFit').innerHTML=''; return; }
+  if(!grupo.length){
+    chipsBox.innerHTML='<span class="faixa-vazio">② Toque nos piquetes abaixo para montar o piquetão</span>';
+  }else{
+    var max=8;
+    var chips=grupo.slice(0,max).map(function(pid){
+      var p=piqueteById(pid); if(!p) return '';
+      return '<span class="faixa-chip">'+(p.saida?'🚚 ':'')+p.name+'<button data-remove-piquete="'+pid+'" title="tirar">×</button></span>';
+    }).join('');
+    if(grupo.length>max) chips+='<span class="faixa-chip mais">+'+(grupo.length-max)+'</span>';
+    chipsBox.innerHTML=chips;
+  }
+  var fi=distFitInfo, fx='';
+  if(!grupo.length||!fi){ fx='<span class="faixa-fit saida" style="font-weight:600;">Cabe? — escolha os piquetes</span>'; }
+  else if(fi.tipo==='saida'){ fx='<span class="faixa-fit saida">🚚 Saída · '+fmtInt(fi.cab)+' cab · '+fmt(fi.ua,2)+' UA</span>'; }
+  else if(!(fi.cap>0)){ fx='<span class="faixa-fit limite">Sem capacidade informada</span>'; }
+  else{
+    var cls=fi.pct>100?'nao':(fi.pct>=85?'limite':'cabe');
+    var txt=fi.pct>100?'✖ Não cabe':(fi.pct>=85?'⚠ No limite':'✔ Cabe');
+    fx='<span class="faixa-fit '+cls+'">'+txt+' · '+fmt(fi.pct,0)+'% de '+fmt(fi.cap,2)+' UA</span>'+(fi.semArea?' <span class="faixa-vazio">há piquete sem área</span>':'');
+  }
+  el('faixaFit').innerHTML=fx;
+}
 function renderLoteSearch(){
   var q=(el('loteSearch').value||'').toLowerCase();
   var results=state.lotes.filter(function(l){return l.ativo!==false && l.lote.toLowerCase().indexOf(q)>=0;});
-  el('loteSearchResults').innerHTML=results.map(function(l){
-    var sel=state.selectedLoteId===l.id?'sel':'';
+  var itens=results.map(function(l){
     var usado=loteConfirmedAllocated(l.id);
-    var restante=Math.max(l.anm-usado,0);
+    return {l:l,usado:usado,restante:Math.max(l.anm-usado,0)};
+  });
+  itens.sort(function(a,b){return (a.restante<=0?1:0)-(b.restante<=0?1:0);});
+  el('loteSearchResults').innerHTML=itens.map(function(it){
+    var l=it.l, sel=state.selectedLoteId===l.id?' sel':'', done=it.restante<=0?' done':'';
     var atual=(l.piqueteAtual||'').trim();
-    return '<tr class="dist-lote-row mono '+sel+'" data-pick-lote="'+l.id+'"><td>'+l.lote+' <span class="tag">'+l.categoria+'</span></td><td>'+(atual?'<span class="tag" style="background:#DCEAF5;color:#274B63;">◉ '+atual+'</span>':'<span style="opacity:.45;">—</span>')+'</td><td style="text-align:right">'+fmtInt(l.anm)+'</td><td style="text-align:right">'+fmtInt(usado)+'</td><td style="text-align:right;font-weight:700;color:'+(restante?'#1F4A35':'#6B756E')+'">'+fmtInt(restante)+'</td></tr>';
-  }).join('') || '<tr><td colspan="5" style="padding:12px;opacity:.6;">nenhum lote encontrado</td></tr>';
+    return '<div class="dist-lote-card dist-lote-row'+sel+done+'" data-pick-lote="'+l.id+'">'+
+      '<div><b>'+l.lote+'</b> <span class="tag">'+l.categoria+'</span></div>'+
+      (atual?'<div><span class="tag" style="background:#DCEAF5;color:#274B63;">◉ está no '+atual+'</span></div>':'')+
+      '<div class="num mono"><b>'+fmtInt(it.restante)+'</b><span>a distribuir</span></div>'+
+      '<div class="sub mono">de '+fmtInt(l.anm)+' cab · '+fmtInt(it.usado)+' com plano</div>'+
+      (it.restante<=0?'<div class="ok">✔ completo</div>':'')+
+    '</div>';
+  }).join('') || '<div class="dist-vazio">nenhum lote encontrado</div>';
 }
 function renderLoteSelecionado(){
   var box=el('loteSelecionadoBox');
-  if(!state.selectedLoteId){ box.innerHTML='';el('btnConfirmarPlano').textContent='Adicionar ao planejamento';return; }
+  if(!state.selectedLoteId){ box.innerHTML='';el('btnConfirmarPlano').textContent='Adicionar ao planejamento';renderFaixaDistribuicao();return; }
   var l=loteById(state.selectedLoteId);
-  if(!l){ box.innerHTML=''; return; }
+  if(!l){ box.innerHTML=''; renderFaixaDistribuicao(); return; }
   var restanteAntes=l.anm-loteConfirmedAllocated(l.id);
   if(state.testCab==null) state.testCab=restanteAntes;
   if(state.testPeso==null) state.testPeso=l.pv;
@@ -2572,19 +2797,20 @@ function renderLoteSelecionado(){
   var distribuido=loteConfirmedAllocated(l.id), pct=l.anm?Math.min(distribuido/l.anm*100,100):0;
   var temSaidaNoGrupo=(state.testGroup||[]).some(function(pid){var p=piqueteById(pid);return p&&p.saida;});
   el('btnConfirmarPlano').textContent=state.editingPlanId?'Salvar alteração':'Adicionar ao planejamento';
-  box.innerHTML='<div style="padding:11px 2px 2px;">'+
-    '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap;"><div style="font-weight:700;font-size:15px;">'+l.lote+' <span class="tag">'+l.categoria+'</span>'+(l.piqueteAtual?'<span class="tag" style="margin-left:5px;background:#DCEAF5;color:#274B63;">está no '+l.piqueteAtual+'</span>':'')+'</div><div class="mono" style="font-size:12px;">'+fmtInt(distribuido)+' / '+fmtInt(l.anm)+' cabeças distribuídas</div></div>'+
-    '<div class="dist-progress"><i style="width:'+pct+'%"></i></div>'+
-    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'+
-      '<label style="font-size:11px;margin-top:10px;">Cabeças nesta distribuição<br><input id="testCabInput" type="number" min="1" max="'+restanteAntes+'" value="'+state.testCab+'" style="width:110px;"></label>'+
-      '<label style="font-size:11px;margin-top:10px;">Peso médio (kg)'+(temSaidaNoGrupo?' <span style="color:#A63D2F;">(peso de venda)</span>':'')+'<br><input id="testPesoInput" type="number" step="0.1" value="'+state.testPeso.toFixed(1)+'" style="width:110px;"></label>'+
-      (temSaidaNoGrupo?'<label style="font-size:11px;margin-top:10px;">Data da venda<br><input id="testDataVendaInput" type="date" value="'+state.testDataVenda+'" style="width:140px;"></label>':'')+
-      '<span class="mono" style="font-size:11px;color:#6B756E;margin-top:24px;">'+fmtInt(restanteAntes)+' cabeça(s) ainda sem plano</span>'+
-    '</div>'+
-  '</div>';
+  box.innerHTML='<div class="faixa-l1">'+
+    '<div class="faixa-lote"><div class="faixa-nome">'+l.lote+' <span class="tag">'+l.categoria+'</span>'+(l.piqueteAtual?'<span class="tag" style="margin-left:5px;background:#DCEAF5;color:#274B63;">está no '+l.piqueteAtual+'</span>':'')+(state.editingPlanId?'<span class="tag" style="margin-left:5px;background:#F8E8BF;color:#7A5410;">editando</span>':'')+'</div>'+
+      '<div class="mono" style="font-size:11.5px;color:#4a5a50;">'+fmtInt(l.anm)+' cab no lote · '+fmtInt(distribuido)+' já com plano</div></div>'+
+    '<label class="faixa-campo">Cabeças nesta distribuição<input id="testCabInput" type="number" min="1" max="'+restanteAntes+'" value="'+state.testCab+'"></label>'+
+    '<label class="faixa-campo">Peso médio (kg)'+(temSaidaNoGrupo?' <span style="color:#A63D2F;">(venda)</span>':'')+'<input id="testPesoInput" type="number" step="0.1" value="'+state.testPeso.toFixed(1)+'"></label>'+
+    (temSaidaNoGrupo?'<label class="faixa-campo">Data da venda<input id="testDataVendaInput" type="date" value="'+state.testDataVenda+'" style="width:140px;"></label>':'')+
+    '<span class="faixa-qtd mono"><b>'+fmtInt(restanteAntes)+'</b> sem plano · '+fmtInt(distribuido)+' / '+fmtInt(l.anm)+' distribuídas</span>'+
+    '<button class="btn-ghost" data-trocar-lote="1" style="margin-bottom:6px;">⇄ Trocar lote</button>'+
+  '</div>'+
+  '<div class="dist-progress"><i style="width:'+pct+'%"></i></div>';
+  renderFaixaDistribuicao();
 }
 function renderPiqueteSearch(){
-  var q=(el('piqueteSearch').value||'').toLowerCase();
+  var q=normBusca(el('piqueteSearch').value);
   var l=state.selectedLoteId;
   if(!l){
     el('piqueteSearchResults').innerHTML='<div style="padding:12px;font-size:12px;opacity:.7;">Escolha um lote acima para liberar os piquetes.</div>';
@@ -2609,9 +2835,9 @@ function renderPiqueteSearch(){
     else semGrupo.push(p);
   });
   var gruposFiltrados=Object.keys(porGrupo).filter(function(g){
-    return !q || g.toLowerCase().indexOf(q)>=0 || porGrupo[g].some(function(p){return p.name.toLowerCase().indexOf(q)>=0;});
+    return !q || normBusca(g).indexOf(q)>=0 || porGrupo[g].some(function(p){return normBusca(p.name).indexOf(q)>=0;});
   });
-  var individuaisFiltrados=semGrupo.filter(function(p){return !q || p.name.toLowerCase().indexOf(q)>=0;});
+  var individuaisFiltrados=semGrupo.filter(function(p){return !q || normBusca(p.name).indexOf(q)>=0;});
 
   var html='';
   if(gruposFiltrados.length){
@@ -2621,7 +2847,8 @@ function renderPiqueteSearch(){
       var capTotal=piqs.reduce(function(s,p){return s+(piqueteCapacidade(p)||0);},0);
       var usadoTotal=piqs.reduce(function(s,p){return s+piqueteConfirmedUA(p.id);},0);
       var ratio=capTotal>0?usadoTotal/capTotal:0, status=ratio>=.85?'full':(usadoTotal>0?'partial':'free');
-      return '<div class="dist-piq '+status+'" data-add-grupo="'+g+'" title="'+piqs.map(function(p){return p.name;}).join(', ')+'"><b>'+g+' ('+piqs.length+')</b><small>'+fmt(Math.max(capTotal-usadoTotal,0),2)+' UA livre</small></div>';
+      var membros=piqs.map(function(p){var hit=q&&normBusca(p.name).indexOf(q)>=0;return hit?'<mark>'+p.name+'</mark>':p.name;}).join(' · ');
+      return '<div class="dist-piq dist-grupo '+status+'" data-add-grupo="'+g+'" title="'+piqs.map(function(p){return p.name;}).join(', ')+'"><b>'+g+' ('+piqs.length+')</b><small>'+fmt(Math.max(capTotal-usadoTotal,0),2)+' UA livre</small><span class="dist-membros">'+membros+'</span></div>';
     }).join('');
   }
   if(individuaisFiltrados.length){
@@ -2639,7 +2866,9 @@ function renderPiqueteSearch(){
   el('piqueteSearchResults').innerHTML=html||'<div style="padding:12px;font-size:12px;opacity:.7;">Nenhum piquete encontrado.</div>';
   el('piqueteStatusCount').textContent=counts.free+' livres · '+counts.partial+' parciais · '+counts.full+' cheios';
 }
-function renderGrupo(){
+function renderGrupo(){ renderGrupoCore(); renderFaixaDistribuicao(); }
+function renderGrupoCore(){
+  distFitInfo=null;
   var box=el('grupoBox');
   var count=el('grupoCount'), gauge=el('fitGauge'), resumo=el('fitResumo');
   var l = state.selectedLoteId ? loteById(state.selectedLoteId) : null;
@@ -2669,11 +2898,12 @@ function renderGrupo(){
   html+='<div style="border-top:1px dashed rgba(255,255,255,.22);margin-top:6px;padding-top:8px;" class="mono">';
   if(temSaida){
     html+='<div style="font-size:11.5px;color:#F5D779;">Grupo de saída — não ocupa pasto'+(state.testGroup.length>1?' (não misture com piquetes reais)':'')+'</div>';
-    gauge.innerHTML='<div class="mono" style="font-size:12px;">'+fmtInt(cab)+' animais · '+fmt(ua,2)+' UA retiradas da lotação</div>'; resumo.textContent='Saída';
+    gauge.innerHTML='<div class="mono" style="font-size:12px;">'+fmtInt(cab)+' animais · '+fmt(ua,2)+' UA retiradas da lotação</div>'; resumo.textContent='Saída'; distFitInfo={tipo:'saida',cab:cab,ua:ua};
   }else{
     var pct=capTotal>0?(usadoOutrosTotal+ua)/capTotal*100:0;
     html+='<div style="font-size:11.5px;">'+fmt(areaTotal,2)+' ha · '+fmt(capTotal,2)+' UA de capacidade'+(semArea?' · há piquete sem área':'')+'</div>';
     gauge.innerHTML=barrilHTML(usadoOutrosTotal+ua,capTotal>0?capTotal:null)+'<div class="mono" style="font-size:11px;margin-top:9px;line-height:1.7;">Capacidade: '+fmt(capTotal,2)+' UA<br>Já ocupada: '+fmt(usadoOutrosTotal,2)+' UA<br>Esta distribuição: '+fmt(ua,2)+' UA ('+fmtInt(cab)+' cab)<br>Ocupação final: <b>'+fmt(pct,0)+'%</b></div>';
+    distFitInfo={tipo:'normal',pct:pct,cap:capTotal,usado:usadoOutrosTotal+ua,semArea:semArea};
     resumo.textContent=pct>100?'Não cabe':(pct>=85?'No limite':'Cabe'); resumo.style.color=pct>100?'#A63D2F':(pct>=85?'#9B6B14':'#2E684A');
   }
   html+='</div>';
@@ -3142,24 +3372,7 @@ function cpImportRows(rows,fileName){
   saveState();renderControlPasto();
 }
 function aplicarGruposAutomaticosControlPasto(physical){
-  var porParent={};
-  physical.forEach(function(r){
-    if(!r.parentId)return;
-    if(!porParent[r.parentId])porParent[r.parentId]=[];
-    porParent[r.parentId].push(r);
-  });
-  var aplicados=0;
-  Object.keys(porParent).forEach(function(pid){
-    var rs=porParent[pid];
-    if(rs.length<2)return;
-    var label=prefixoComum(rs.map(function(r){return r.nome;}));
-    if(!label)return;
-    rs.forEach(function(r){
-      var match=state.piquetes.find(function(p){return !p.saida&&normalizarNomeControle(p.name)===normalizarNomeControle(r.nome);});
-      if(match&&!match.grupo){match.grupo=label;aplicados++;}
-    });
-  });
-  return aplicados;
+  return regrouparPorControlPasto(false).piquetes;
 }
 function cpData(){
   return state.controlPasto && Array.isArray(state.controlPasto.rows) ? state.controlPasto : null;
@@ -3312,7 +3525,6 @@ function cpExportRecorrida(){
       var base=id,k=2;while(used[id])id=base+'_'+(k++);used[id]=1;
       var alvo=cpTargetForPhysical(r,defaultAlvo);
       var grupoFinal=(match&&match.grupo&&match.grupo.trim())?match.grupo.trim():(g.parentId||'');
-      if(match&&!match.grupo&&g.parentId){match.grupo=g.parentId;}
       piqs.push({
         id:id,name:r.nome,area:Number(r.area),uaHaAlvo:alvo,
         controlPastoParentId:grupoFinal,controlPastoGrupo:grupoFinal
@@ -3995,6 +4207,14 @@ el('piquetesTableBody').addEventListener('change',function(e){
   if(idAlvo){ var p2=piqueteById(idAlvo); p2.uaHaAlvo=parseFloat(t.value.replace(',','.'))||0; saveState(); renderPiquetesPage(); }
 });
 el('btnFormarGrupo').addEventListener('click',formarGrupo);
+el('btnRegruparCP').addEventListener('click',function(){
+  var m=el('importPiqueteMsg');
+  if(!cpData()){ m.textContent='⚠ Importe primeiro o arquivo do Control Pasto (aba Control Pasto).'; return; }
+  if(!confirm('Refazer os grupos conforme os módulos do Control Pasto? Os grupos dos piquetes que aparecem no Control Pasto serão trocados pelos de lá.')) return;
+  var r=regrouparPorControlPasto(true);
+  saveState(); renderPiquetesPage();
+  m.textContent='✅ '+r.grupos+' grupo(s) refeito(s) pelo Control Pasto ('+r.piquetes+' piquetes).';
+});
 el('btnExportarEstrutura').addEventListener('click',exportarEstrutura);
 el('btnImportarEstrutura').addEventListener('click',function(){el('importEstruturaFile').click();});
 el('importEstruturaFile').addEventListener('change',importarEstrutura);
@@ -4013,7 +4233,7 @@ el('piquetesTableBody').addEventListener('click',function(e){
   }
   var idRemoveGrupo=e.target.getAttribute('data-remove-grupo');
   if(idRemoveGrupo){
-    var pG=piqueteById(idRemoveGrupo); if(pG)pG.grupo='';
+    var pG=piqueteById(idRemoveGrupo); if(pG)pG.grupo=''; limparGruposSolitarios();
     saveState(); renderPiquetesPage(); return;
   }
   var id=e.target.getAttribute('data-del-piquete');
@@ -4047,7 +4267,19 @@ el('loteSearchResults').addEventListener('click',function(e){
   if(id){
     state.selectedLoteId=id; state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null;state.editingPlanId=null;
     el('piqueteSearch').value='';
+    distListaLotesAberta=false; distMsg='';
     saveState(); renderLoteSearch(); renderLoteSelecionado(); renderPiqueteSearch(); renderGrupo(); renderDistribuicoesConfirmadas();
+    var w=el('distWork'); if(w&&w.scrollIntoView) w.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+});
+el('pg-distribuicao').addEventListener('click',function(e){
+  if(e.target.closest('[data-trocar-lote]')){
+    distListaLotesAberta=true; renderFaixaDistribuicao();
+    var pn=el('distLotePanel'); if(pn&&pn.scrollIntoView) pn.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  if(e.target.closest('[data-ir-revisao]')){
+    var rv=el('revisaoRascunho'); if(rv&&rv.scrollIntoView) rv.scrollIntoView({behavior:'smooth',block:'start'});
   }
 });
 el('loteSelecionadoBox').addEventListener('input',function(e){
@@ -4079,14 +4311,16 @@ el('piqueteSearchResults').addEventListener('click',function(e){
     saveState(); renderPiqueteSearch(); renderGrupo();
   }
 });
-el('grupoBox').addEventListener('click',function(e){
+function removerPiqueteDoGrupo(e){
   var btn=e.target.closest('[data-remove-piquete]');
   var id=btn&&btn.getAttribute('data-remove-piquete');
   if(id){
     state.testGroup=state.testGroup.filter(function(pid){return pid!==id;});
     saveState(); renderPiqueteSearch(); renderGrupo();
   }
-});
+}
+el('grupoBox').addEventListener('click',removerPiqueteDoGrupo);
+el('faixaPiquetes').addEventListener('click',removerPiqueteDoGrupo);
 
 el('btnConfirmarPlano').addEventListener('click',function(){
   var err=el('confirmErr'); err.textContent='';
@@ -4108,11 +4342,17 @@ el('btnConfirmarPlano').addEventListener('click',function(){
   if(!Array.isArray(state.rascunhoPlanos))state.rascunhoPlanos=JSON.parse(JSON.stringify(state.planos||[]));
   if(state.editingPlanId){var editIdx=state.rascunhoPlanos.findIndex(function(p){return p.id===state.editingPlanId;});if(editIdx>=0)state.rascunhoPlanos[editIdx]=novoPlano;else state.rascunhoPlanos.push(novoPlano);}
   else state.rascunhoPlanos.push(novoPlano);
+  var eraEdicao=!!state.editingPlanId;
   state.editingPlanId=null;
   state.testGroup=[]; state.testCab=null; state.testPeso=null; state.testDataVenda=null;
-  if(loteRestante(l)<=0) state.selectedLoteId=null;
+  var completou=loteRestante(l)<=0;
+  if(completou) state.selectedLoteId=null;
+  distMsg='✔ '+(eraEdicao?'Alterado: ':'Adicionado: ')+l.lote+' → '+piquetesSnapshot.map(function(p){return p.name;}).join(' + ')+' ('+fmtInt(cab)+' cab)'+(completou?' · lote completo':'');
+  if(distMsgTimer) clearTimeout(distMsgTimer);
+  distMsgTimer=setTimeout(function(){distMsg='';var m=el('faixaMsg');if(m)m.textContent='';},6000);
   saveState();
   renderAll();
+  if(completou){ var pn2=el('distLotePanel'); if(pn2&&pn2.scrollIntoView) pn2.scrollIntoView({behavior:'smooth',block:'start'}); }
 });
 el('pg-distribuicao').addEventListener('click',function(e){
   if(e.target.closest('#btnAgruparLotes')){
@@ -4134,7 +4374,7 @@ el('pg-distribuicao').addEventListener('click',function(e){
     state.editingPlanId=pl.id;state.selectedLoteId=pl.loteId;state.testCab=pl.cab;state.testPeso=pl.peso;
     state.testGroup=pl.piquetes.map(function(p){return p.id;}).filter(function(id){return !!piqueteById(id);});
     state.testDataVenda=pl.dataVenda||todayISO();
-    saveState();renderAll();el('loteSelecionadoBox').scrollIntoView({behavior:'smooth',block:'start'});return;
+    saveState();distListaLotesAberta=false;renderAll();el('distWork').scrollIntoView({behavior:'smooth',block:'start'});return;
   }
   var rem=e.target.closest('[data-remove-draft]');
   if(rem){var rid=rem.getAttribute('data-remove-draft');state.rascunhoPlanos=planosDistribuicao().filter(function(p){return p.id!==rid;});if(state.editingPlanId===rid){state.editingPlanId=null;state.selectedLoteId=null;state.testGroup=[];}saveState();renderAll();return;}
